@@ -410,7 +410,7 @@ const Submit = (row) => {
       .then(response => {
         console.log('上传apk成功!');
         ProgressShow.value = false
-        analysisNum.value = response.message.analysis_no
+        analysisNum.value = response.data.message.analysis_no
         startTimer()
         //tableData.value = tableData.value.filter((item) => item.name !== row.name);
         //UploadFiles.value = UploadFiles.value.filter((item) => item.name !== row.name);

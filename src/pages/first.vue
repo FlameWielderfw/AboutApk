@@ -215,7 +215,7 @@
           </div>
         </div>
       </section>
-      <section v-loading="true" v-show="staticLoading^dynamicLoading"
+      <section v-loading="true" v-show="staticLoading!==dynamicLoading"
                style="height: 200px;text-align: center;justify-content: center;"
                element-loading-text="动态分析中，请耐心等待.....">
       </section>

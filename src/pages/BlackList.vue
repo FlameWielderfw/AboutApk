@@ -1,30 +1,42 @@
 <script setup>
-import { ref } from 'vue'
+import {onMounted, ref} from 'vue'
 import dayjs from 'dayjs'
+import axios from "axios";
 
 const now = new Date()
-
+const BaseUrl = 'http://localhost:8080'
 const tableData = ref([
   {
-    date: '2016-05-01',
-    name: 'Tom',
-    state: 'California',
-    zip: 'CA 90036',
+    id: 25,
+    apkName: "1ace25ed992a997d43362ed4f0665e95.apk",
+    packageName: "",
+    staticStatus: "Success",
+    dynamicStatus: "Success",
+    judgeStatus: "Success",
+    judgeResult: "80",
+    createTime: "2024-06-25T02:22:06.000+00:00",
+    analysisNo: "ac6ae201b2b4e918c66c9d61d4a65e3c"
   },
-  {
-    date: '2016-05-02',
-    name: 'Tom',
-    state: 'California',
-    zip: 'CA 90036',
-  },
-  {
-    date: '2016-05-03',
-    name: 'Tom',
-    state: 'California',
-    zip: 'CA 90036',
-  },
+
 ])
 
+onMounted(()=>{
+  axios({
+    method: 'GET',
+    url: BaseUrl+'/api/get_black_list',
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+      .then(response => {
+        console.log('获取黑名单成功');
+        tableData.value = response.data.message
+      })
+      .catch(error => {
+        console.error('Error uploading file:', error);
+        alert(error)
+      });
+})
 const deleteRow = (index) => {
   tableData.value.splice(index, 1)
 }
@@ -38,9 +50,9 @@ const deleteRow = (index) => {
       </div>
       <div class="Table">
         <el-table :data="tableData" style="width: 90%" max-height="250">
-          <el-table-column prop="name" label="App" width="150" />
-          <el-table-column prop="date" label="检定时间" width="170" />
-          <el-table-column prop="state" label="State" width="150" />
+          <el-table-column prop="apkName" label="App" width="200" />
+          <el-table-column prop="createTime" label="检定时间" width="200" />
+          <el-table-column prop="judgeResult" label="评分" width="80" />
           <el-table-column fixed="right" label="Operations" min-width="100">
             <template #default="scope">
               <el-button
@@ -63,9 +75,9 @@ const deleteRow = (index) => {
       </div>
       <div class="Table">
         <el-table :data="tableData" style="width: 90%" max-height="250">
-          <el-table-column prop="name" label="App" width="150" />
-          <el-table-column prop="date" label="检定时间" width="170" />
-          <el-table-column prop="state" label="State" width="150" />
+          <el-table-column prop="apkName" label="App" width="200" />
+          <el-table-column prop="createTime" label="检定时间" width="200" />
+          <el-table-column prop="judgeResult" label="评分" width="80" />
           <el-table-column fixed="right" label="Operations" min-width="100">
             <template #default="scope">
               <el-button

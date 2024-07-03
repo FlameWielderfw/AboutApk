@@ -1,12 +1,5 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
-import First from './pages/first.vue'
-import { ElCard } from 'element-plus'
-import { UploadFilled } from '@element-plus/icons-vue'
-import BlackList from './pages/BlackList.vue'
 import {ref} from "vue";
-import Report from "@/pages/Report.vue";
 
 let Pageshow = ref(true)
 const ApkClick= ()=> {

@@ -441,6 +441,7 @@ function GetStaticData(Data){
   v3SignatureInfo.value.md5 = Data.v3SignatureInfo.certification.md5
   v3SignatureInfo.value.sha1 = Data.v3SignatureInfo.certification.sha1
   v3SignatureInfo.value.sha256 = Data.v3SignatureInfo.certification.sha256
+  // TODO permission 的 status 等信息
   permissionData.value = Data.permissions.map((item, index) => {
     return {["permissions"]: item};
   })
@@ -590,6 +591,7 @@ let sdks = ref([
   {sdk:"java.lang.Class"},
   {sdk:"com.bet8df.cloudtopapp.jpush.PushService"},
 ])
+// TODO result 通过调用 get_judge_result 得到
 let result = ref()
 const GetColor = (status)=>{
   let color = '#'

@@ -20,7 +20,7 @@ axios.defaults.headers.post['Content-Type'] = 'application/json'
 
 // 创建 Axios 实例
 const instance = axios.create({
-    baseURL: 'http://localhost:8080',
+    baseURL: 'http://localhost:10315',
     timeout: 10000, // 请求超时时间为10秒
     headers: {
         'Authorization': 'Bearer your_access_token',

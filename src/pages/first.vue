@@ -16,7 +16,7 @@
             <el-upload
                 class="uploadBox"
                 drag
-                action="https://1bd345dd-1f51-4fb4-b640-7853dccf5a32.mock.pstmn.io/getapk"
+                action="http://127.0.0.1:10315/api/throwaway"
                 multiple
                 :show-file-list= "false"
                 v-model:file-list="fileList"
@@ -41,32 +41,32 @@
         </el-aside>
         <el-main style="height: 450px;display: flex;justify-content: center;flex-direction: column;align-items: center;padding: 0">
           <el-card shadow="hover" class="UploadCard">
-          <el-text class="title" >单文件上传</el-text>
-          <el-upload
-              class="uploadBox2"
-              drag
-              action="https://1bd345dd-1f51-4fb4-b640-7853dccf5a32.mock.pstmn.io/getapk"
-              multiple
-              :show-file-list= "false"
-              :on-change="handleChange"
-              :on-error="handleErrorUpload"
-              :on-success="qrcodeUpload"
-              :limit = 1
-              :accept="'.jpg,.jpeg,.png,'"
-          >
-            <div style="text-align: center;position: relative;top:60px">
-              <el-button type="primary" color="#725feb" size="mini" style="width: 180px;height: 50px">
-                <el-icon size="20px"><Document /></el-icon>
-                <h style="font-size: 16px;font-weight: 550">选择二维码</h></el-button>
-            </div>
-            <div style="text-align: center;position: relative;top:80px">
-              <h style="color: gray">请将您的二维码拖到这里</h>
-            </div>
-          </el-upload>
-          <el-row style="justify-content: center;top:20px;height: 100px;width: 100%" >
-            <el-input  v-model="input" style="width: 65%;height: 40px;margin-right: 20px;" placeholder="Please enter the URL" />
-            <el-button style="position:relative;top:5px"  type="primary" color="#725feb" @click="UploadURL">上传</el-button>
-          </el-row>
+            <el-text class="title" >单文件上传</el-text>
+            <el-upload
+                class="uploadBox2"
+                drag
+                action="http://127.0.0.1:10315/api/throwaway"
+                multiple
+                :show-file-list= "false"
+                :on-change="handleChange"
+                :on-error="handleErrorUpload"
+                :on-success="qrcodeUpload"
+                :limit = 1
+                :accept="'.jpg,.jpeg,.png,'"
+            >
+              <div style="text-align: center;position: relative;top:60px">
+                <el-button type="primary" color="#725feb" size="mini" style="width: 180px;height: 50px">
+                  <el-icon size="20px"><Document /></el-icon>
+                  <h style="font-size: 16px;font-weight: 550">选择二维码</h></el-button>
+              </div>
+              <div style="text-align: center;position: relative;top:80px">
+                <h style="color: gray">请将您的二维码拖到这里</h>
+              </div>
+            </el-upload>
+            <el-row style="justify-content: center;top:20px;height: 100px;width: 100%" >
+              <el-input  v-model="input" style="width: 65%;height: 40px;margin-right: 20px;" placeholder="Please enter the URL" />
+              <el-button style="position:relative;top:5px"  type="primary" color="#725feb" @click="UploadURL">上传</el-button>
+            </el-row>
           </el-card>
         </el-main>
       </el-container>
@@ -169,7 +169,7 @@
             </div>
             <div class="row-body">
               <el-card class="card" >
-                <strong>Application Permissions</strong>
+                <strong>应用权限清单</strong>
                 <el-table :data="permissionData"  border style="width: 100%;margin-top: 5px">
                   <el-table-column prop="permissions" sortable label="Permission" width="200"/>
                   <el-table-column prop="status" label="STATUS" width="150">
@@ -240,7 +240,7 @@
             </div>
             <div class="row-body">
               <el-card class="card">
-                <strong>Result</strong>
+                <strong>研判结果</strong>
                 {{result}}
               </el-card>
             </div>
@@ -274,7 +274,7 @@ import axios from "axios";
 import jsQR from 'jsqr'
 
 let analysisNum = ref()
-const BaseUrl = 'http://127.0.0.1:8080'
+const BaseUrl = 'http://127.0.0.1:10315'
 let cancelFileUpload
 let isShow = ref(false)
 const qrcodeData = ref('无结果')
@@ -290,8 +290,6 @@ const customColor = [
   { color: '#5cb87a', percentage: 100 },
 ]
 const tableData = ref([])
-
-
 
 const fileList = ref<UploadUserFile[]>([])
 const UploadURL = ()=>{
@@ -342,34 +340,39 @@ const RequestForReport=()=>{
   formData.append('analysis_no',analysisNum.value)
   axios({
     method: 'POST',
-    url: BaseUrl+'/api/get_analysis_result',
-    data:formData,
+    url: BaseUrl+'/api/get_result',
+    data: formData,
     headers: {
       'Content-Type': 'multipart/form-data'
-    },
+    }
   })
-      .then(response => {
-        if(response.data.staticStatus == "success"){
+      .then (response => {
+        const staticStatus = response.data.staticStatus
+        const dynamicStatus = response.data.dynamicStatus
+        if (staticStatus === "Success"){
           console.log('静态分析完成！')
           GetStaticData(response.data.message)
           staticLoading.value = false
         }
-        if(response.data.dynamicStatus == "success"){
+        if (dynamicStatus === "Success") {
           console.log('动态分析完成！');
           let Data = response.data.message
-          urls.value = Data.urls
-          sdks.value = Data.sdks
-          if(Data.isBad)
-            result.value = "鉴定为很黄很暴力"
-          else
-            result.value = "莫得问题"
+          urls.value = Data.urls.map((item, index) => {
+            return {["url"]: item};
+          });
+          // TODO 添加 screenContent 前端显示
           dynamicLoading.value = false
+          stopTimer()
+        } else if (dynamicStatus !== "Analysing") {
+          console.log("动态分析失败")
+          stopTimer()
         }
       })
       .catch(error => {
         console.error('Error uploading file:', error);
       });
 }
+
 //定时发送请求
 function startTimer() {
   if (!isTimerRunning.value) {
@@ -410,7 +413,7 @@ const Submit = (row) => {
       .then(response => {
         console.log('上传apk成功!');
         ProgressShow.value = false
-        analysisNum.value = response.data.message.analysis_no
+        analysisNum.value = response.data.message
         startTimer()
         //tableData.value = tableData.value.filter((item) => item.name !== row.name);
         //UploadFiles.value = UploadFiles.value.filter((item) => item.name !== row.name);
@@ -420,8 +423,9 @@ const Submit = (row) => {
         alert(error)
       });
 }
+
 function GetStaticData(Data){
-  APK.value.package_name=Data.packageName
+  APK.value.package_name = Data.packageName
   APK.value.app_name = Data.name
   APK.value.size = Data.size/1024
   APK.value.file_name = Data.absolutePath.split('\\').pop()
@@ -437,10 +441,20 @@ function GetStaticData(Data){
   v3SignatureInfo.value.md5 = Data.v3SignatureInfo.certification.md5
   v3SignatureInfo.value.sha1 = Data.v3SignatureInfo.certification.sha1
   v3SignatureInfo.value.sha256 = Data.v3SignatureInfo.certification.sha256
-  permissionData.value = Data.permissions
+  // TODO permission 的 status 等信息
+  permissionData.value = Data.permissions.map((item, index) => {
+    return {["permissions"]: item};
+  })
+  urls.value = Data.urls.map((item, index) => {
+    return {["url"]: item};
+  });
+  sdks.value = Data.sdks.map((item, index) => {
+    return {["sdk"]: item};
+  });
 }
+
 //二维码解析
-const decodeQRCode=(image)=> {
+const decodeQRCode = (image)=> {
   //创建画布
   const canvas = document.createElement('canvas');
   const context = canvas.getContext('2d');
@@ -474,7 +488,7 @@ const RequestByURL = (text)=>{
       .then(response => {
         console.log('File uploaded successfully!');
         dialogVisible.value = true
-        analysisNum.value = response.data.message.analysis_no
+        analysisNum.value = response.data.message
         startTimer()
       })
       .catch(error => {
@@ -523,6 +537,7 @@ let VersionInfo = ref({
   TargetSDKVersion: 28,
   CompileSDKVersion: 28
 })
+// TODO 签名需要展示 subject
 let v1SignatureInfo = ref({
   md5:'66 BE DA 48 2C 14 5C 9B B6 FE A4 83 83 8C 1A E0',
   sha1:'DE 57 DA 7A AC 68 9B E3 47 83 FA A0 10 9D 8C 9B 51 8D 83 74',
@@ -576,6 +591,7 @@ let sdks = ref([
   {sdk:"java.lang.Class"},
   {sdk:"com.bet8df.cloudtopapp.jpush.PushService"},
 ])
+// TODO result 通过调用 get_judge_result 得到
 let result = ref()
 const GetColor = (status)=>{
   let color = '#'

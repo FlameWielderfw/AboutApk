@@ -41,32 +41,32 @@
         </el-aside>
         <el-main style="height: 450px;display: flex;justify-content: center;flex-direction: column;align-items: center;padding: 0">
           <el-card shadow="hover" class="UploadCard">
-          <el-text class="title" >单文件上传</el-text>
-          <el-upload
-              class="uploadBox2"
-              drag
-              action="http://127.0.0.1:10315/api/throwaway"
-              multiple
-              :show-file-list= "false"
-              :on-change="handleChange"
-              :on-error="handleErrorUpload"
-              :on-success="qrcodeUpload"
-              :limit = 1
-              :accept="'.jpg,.jpeg,.png,'"
-          >
-            <div style="text-align: center;position: relative;top:60px">
-              <el-button type="primary" color="#725feb" size="mini" style="width: 180px;height: 50px">
-                <el-icon size="20px"><Document /></el-icon>
-                <h style="font-size: 16px;font-weight: 550">选择二维码</h></el-button>
-            </div>
-            <div style="text-align: center;position: relative;top:80px">
-              <h style="color: gray">请将您的二维码拖到这里</h>
-            </div>
-          </el-upload>
-          <el-row style="justify-content: center;top:20px;height: 100px;width: 100%" >
-            <el-input  v-model="input" style="width: 65%;height: 40px;margin-right: 20px;" placeholder="Please enter the URL" />
-            <el-button style="position:relative;top:5px"  type="primary" color="#725feb" @click="UploadURL">上传</el-button>
-          </el-row>
+            <el-text class="title" >单文件上传</el-text>
+            <el-upload
+                class="uploadBox2"
+                drag
+                action="http://127.0.0.1:10315/api/throwaway"
+                multiple
+                :show-file-list= "false"
+                :on-change="handleChange"
+                :on-error="handleErrorUpload"
+                :on-success="qrcodeUpload"
+                :limit = 1
+                :accept="'.jpg,.jpeg,.png,'"
+            >
+              <div style="text-align: center;position: relative;top:60px">
+                <el-button type="primary" color="#725feb" size="mini" style="width: 180px;height: 50px">
+                  <el-icon size="20px"><Document /></el-icon>
+                  <h style="font-size: 16px;font-weight: 550">选择二维码</h></el-button>
+              </div>
+              <div style="text-align: center;position: relative;top:80px">
+                <h style="color: gray">请将您的二维码拖到这里</h>
+              </div>
+            </el-upload>
+            <el-row style="justify-content: center;top:20px;height: 100px;width: 100%" >
+              <el-input  v-model="input" style="width: 65%;height: 40px;margin-right: 20px;" placeholder="Please enter the URL" />
+              <el-button style="position:relative;top:5px"  type="primary" color="#725feb" @click="UploadURL">上传</el-button>
+            </el-row>
           </el-card>
         </el-main>
       </el-container>
@@ -215,7 +215,7 @@
           </div>
         </div>
       </section>
-      <section v-loading="true" v-show="staticLoading^dynamicLoading"
+      <section v-loading="true" v-show="staticLoading!==dynamicLoading"
                style="height: 200px;text-align: center;justify-content: center;"
                element-loading-text="动态分析中，请耐心等待.....">
       </section>
@@ -341,7 +341,7 @@ const RequestForReport=()=>{
   axios({
     method: 'POST',
     url: BaseUrl+'/api/get_result',
-    data:formData,
+    data: formData,
     headers: {
       'Content-Type': 'multipart/form-data'
     }

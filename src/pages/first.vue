@@ -16,7 +16,7 @@
             <el-upload
                 class="uploadBox"
                 drag
-                action="http://127.0.0.1:10315/api/throwaway"
+                action="https://1bd345dd-1f51-4fb4-b640-7853dccf5a32.mock.pstmn.io/getapk"
                 multiple
                 :show-file-list= "false"
                 v-model:file-list="fileList"
@@ -237,11 +237,33 @@
                   <el-table-column prop="sdk" label="SDK"/>
                 </el-table>
               </el-card>
-            </div>
+            </div><div class="row-body">
+            <el-card class="card">
+              <strong>App内可疑文字</strong>
+              <br>
+              {{screenContent}}
+            </el-card>
+          </div>
             <div class="row-body">
               <el-card class="card">
                 <strong>研判结果</strong>
-                {{result}}
+                <br>
+                <div v-for="item in resultData">
+                  {{item.val}}
+                  <br>
+                  <el-text style="font-weight: 550">判断原因为:</el-text>
+                  <br>
+                  <el-text v-for="reason in item.reason.split('\n')">
+                    {{reason}}
+                    <br>
+                  </el-text>
+                </div>
+                <br>
+                <div class="image-grid">
+                  <div v-for="(imageUrl, index) in imageUrls" :key="index" class="image-container">
+                    <img :src="imageUrl" alt="Image" class="image">
+                  </div>
+                </div>
               </el-card>
             </div>
           </div>
@@ -360,9 +382,10 @@ const RequestForReport=()=>{
           urls.value = Data.urls.map((item, index) => {
             return {["url"]: item};
           });
-          // TODO 添加 screenContent 前端显示
+          screenContent.value = Data.screenContent
           dynamicLoading.value = false
           stopTimer()
+          Get_result()
         } else if (dynamicStatus !== "Analysing") {
           console.log("动态分析失败")
           stopTimer()
@@ -372,7 +395,49 @@ const RequestForReport=()=>{
         console.error('Error uploading file:', error);
       });
 }
-
+//获取判断结果
+function Get_result(){
+  axios({
+    method: 'POST',
+    url: BaseUrl+'/api/get_judge_result',
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    },
+  })
+      .then(response => {
+        console.log('获取研判结果成功!');
+        let message = response.data.message
+        message.forEach((item,index)=>{
+          let parts = item.split('\n');
+          resultData[index].val = parts[0];
+          resultData[index].reason = parts.slice(1).join('\n');
+        })
+      })
+      .catch(error => {
+        console.error('获取结果失败！');
+        alert(error)
+      });
+}
+//获取图片
+function Get_images(){
+  axios({
+    method: 'POST',
+    url: BaseUrl+'/api/get_screencaps',
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    },
+  })
+      .then(response => {
+        console.log('获取图片成功!');
+        response.data.message.forEach(url => {
+          imageUrls.value.push(`${BaseUrl}${url}`);
+        });
+      })
+      .catch(error => {
+        console.error('获取图片失败！');
+        alert(error)
+      });
+}
 //定时发送请求
 function startTimer() {
   if (!isTimerRunning.value) {
@@ -432,19 +497,27 @@ function GetStaticData(Data){
   VersionInfo.value.minSDKVersion = Data.versionInfo.minSdkVersion
   VersionInfo.value.TargetSDKVersion = Data.versionInfo.targetSdkVersion
   VersionInfo.value.CompileSDKVersion = Data.versionInfo.compileSdkVersion
+  v1SignatureInfo.value.subject = Data.v1SignatureInfo.subject
   v1SignatureInfo.value.md5 = Data.v1SignatureInfo.certification.md5
   v1SignatureInfo.value.sha1 = Data.v1SignatureInfo.certification.sha1
   v1SignatureInfo.value.sha256 = Data.v1SignatureInfo.certification.sha256
+  v2SignatureInfo.value.subject = Data.v2SignatureInfo.subject
   v2SignatureInfo.value.md5 = Data.v2SignatureInfo.certification.md5
   v2SignatureInfo.value.sha1 = Data.v2SignatureInfo.certification.sha1
   v2SignatureInfo.value.sha256 = Data.v2SignatureInfo.certification.sha256
+  v3SignatureInfo.value.subject = Data.v3SignatureInfo.subject
   v3SignatureInfo.value.md5 = Data.v3SignatureInfo.certification.md5
   v3SignatureInfo.value.sha1 = Data.v3SignatureInfo.certification.sha1
   v3SignatureInfo.value.sha256 = Data.v3SignatureInfo.certification.sha256
-  // TODO permission 的 status 等信息
-  permissionData.value = Data.permissions.map((item, index) => {
-    return {["permissions"]: item};
-  })
+
+  permissionData.value = Object.keys(Data.permissions).map(key => {
+    return {
+      permissions: key,
+      status: Data.permissions[key][0],
+      info: Data.permissions[key][1],
+      description: Data.permissions[key][2]
+    };
+  });
   urls.value = Data.urls.map((item, index) => {
     return {["url"]: item};
   });
@@ -526,6 +599,9 @@ const dialogVisible = ref(false)
 let ProgressShow = ref(true)
 let staticLoading = ref(false)
 let dynamicLoading = ref(false)
+let imageUrls = ref([
+
+])
 let APK = ref({
   file_name:'1ace25ed992a997d43362ed4f0665e95.apk',
   app_name:'金鼎娱乐城',
@@ -537,18 +613,21 @@ let VersionInfo = ref({
   TargetSDKVersion: 28,
   CompileSDKVersion: 28
 })
-// TODO 签名需要展示 subject
+
 let v1SignatureInfo = ref({
+  subject:'CN=1',
   md5:'66 BE DA 48 2C 14 5C 9B B6 FE A4 83 83 8C 1A E0',
   sha1:'DE 57 DA 7A AC 68 9B E3 47 83 FA A0 10 9D 8C 9B 51 8D 83 74',
   sha256:'63 AA 36 63 A1 EF DD 49 80 78 41 85 C1 E7 38 15 95 64 CB FF E3 EC 05 0C FC 46 90 AE 4B CB 52 BB'
 })
 let v2SignatureInfo = ref({
+  subject:'',
   md5:'',
   sha1:'',
   sha256:''
 })
 let v3SignatureInfo = ref({
+  subject:'',
   md5:'',
   sha1:'',
   sha256:''
@@ -591,8 +670,13 @@ let sdks = ref([
   {sdk:"java.lang.Class"},
   {sdk:"com.bet8df.cloudtopapp.jpush.PushService"},
 ])
-// TODO result 通过调用 get_judge_result 得到
-let result = ref()
+let screenContent = ref('正在处理线路... 检查更新 未知错误. 注册 登录 游戏推荐 首页 存款 优惠 客服 我的 推荐码 d9bb84 账号 请输入3-16位字母或数字组合 密码 请输入8-20位的数字组合 确认密码 真实姓名 请输入您的真实姓名 手机号码 请输入的您的手机号 微信号码 请输入的您的微信号 QQ号码 请输入的您的QQ号 立即注册 同意\\"金鼎娱乐城\\"所有规则与条款及隐私权政策\\" 友情提醒：每天充值一笔，打一倍流水薅彩金套利的会员，将不参与平台任何活动优惠！ 彩票 棋牌 真人 电子 捕鱼 体育 新幸运飞艇 IG赛车 AFB视讯 AG视讯 香港彩 KY棋牌 皇冠体育 紧急通知:近期风控较严如无法打开在线客服请添加QQ：1323316887。vx：jdjj1105咨询！ 再按一次退出应用 重要通知：由于国内断卡行动日益严重，防止您的银行卡被风控，建议您下载okpay虚拟币钱包或者万币钱包存取款，每天3次免费取款次数，虚拟币存款每笔赠送1%彩金，存款彩金需当天申请(只下注香港/澳门六合不送），钱包下载详情操作可以联系24小时在线客服。 请输入用户名 请输入密码 记住密码 忘记密码？ 立即登录 没账号?立即注册')
+let resultData = ref([
+  {
+    val:'赌博',
+    reason:'应用存在关键词：彩票\n应用存在关键词：投注'
+  }
+])
 const GetColor = (status)=>{
   let color = '#'
   if(status == 'normal')
@@ -621,6 +705,8 @@ function ClearALl(){
   permissionData.value = []
   sdks.value = []
   urls.value = []
+  resultData.value = []
+  imageUrls.value = []
 }
 const CancelUpload = ()=>{
   cancelFileUpload.cancel()
@@ -783,6 +869,24 @@ watchEffect(() => {
 }
 strong{
   font-weight: bolder;
+}
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-auto-rows: 400px;
+  grid-gap: 20px;
+}
 
+.image-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.image {
+  width: auto;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
 }
 </style>

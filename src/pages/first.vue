@@ -102,6 +102,7 @@
       title="检测报告"
       width="1000"
       height="80vh"
+      style="border-radius: 8px"
       :before-close="handleClose"
   >
     <span style="margin-left: 20px">上传进度</span>
@@ -249,7 +250,7 @@
                 <strong>研判结果</strong>
                 <br>
                 <div v-for="item in resultData">
-                  {{item.val}}
+                  涉及{{item.val}}
                   <br>
                   <el-text style="font-weight: 550">判断原因为:</el-text>
                   <br>
@@ -258,6 +259,8 @@
                     <br>
                   </el-text>
                 </div>
+                <br>
+                <strong>违规图片</strong>
                 <br>
                 <div class="image-grid">
                   <div v-for="(imageUrl, index) in imageUrls" :key="index" class="image-container">
@@ -597,8 +600,8 @@ let v2SignatureShow = ref(true)
 let v3SignatureShow = ref(false)
 const dialogVisible = ref(false)
 let ProgressShow = ref(true)
-let staticLoading = ref(false)
-let dynamicLoading = ref(false)
+let staticLoading = ref(true)
+let dynamicLoading = ref(true)
 let imageUrls = ref([
 
 ])
@@ -872,21 +875,24 @@ strong{
 }
 .image-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  grid-auto-rows: 400px;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: 500px;
   grid-gap: 20px;
 }
 
 .image-container {
-  width: 100%;
-  height: 100%;
   position: relative;
+  width: 100%;
+  height: auto;
+  padding-bottom: 60%; /* 1280 / 768 = 1.6667, 75% = 1.5 */
 }
 
 .image {
-  width: auto;
-  height: 100%;
-  object-fit: cover;
   position: absolute;
+  width: 100%;
+  height: auto;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 </style>

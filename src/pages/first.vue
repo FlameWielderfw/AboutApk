@@ -213,7 +213,7 @@
       </section>
 
 <!--      动态分析加载界面 -->
-      <section v-loading="true" v-show="staticLoading!==dynamicLoading"
+      <section v-loading="true" v-show="staticLoading !== dynamicLoading"
                style="height: 200px; text-align: center; justify-content: center;"
                element-loading-text="动态分析中，请耐心等待.....">
       </section>
@@ -248,7 +248,7 @@
       </section>
 
 <!--      研判加载界面 -->
-      <section v-loading="true" v-show="judgeLoading === true && staticLoading === true && dynamicLoading === true"
+      <section v-loading="true" v-show="judgeLoading === true && staticLoading !== dynamicLoading"
                style="height: 200px; text-align: center; justify-content: center;"
                element-loading-text="研判中，请耐心等待.....">
       </section>
@@ -283,7 +283,7 @@
     </div>
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="CancelUpload">关闭</el-button>
+        <el-button @click="CloseDialog">关闭</el-button>
         <el-button type="primary" @click="ProofPDF">
           导出为pdf
         </el-button>
@@ -307,13 +307,12 @@ import type {
 } from 'element-plus'
 import {CircleCheck, Document} from '@element-plus/icons-vue'
 import axios from "axios";
-import jsQR from 'jsqr';
 import DVM_PERMISSIONS from '@/data/dvm_permission';
 import AnalysisService from '@/service/AnalysisService'
 import UrlUtils from '@/utils/UrlUtils'
+import ImageUtils from '@/utils/ImageUtils'
 
 const BaseUrl = 'http://127.0.0.1:10315'
-let cancelFileUpload
 let isShow = ref(false)
 const qrcodeData = ref('无结果')
 const UploadProgress = ref(0);
@@ -530,28 +529,6 @@ function GetStaticData(Data){
   });
 }
 
-//二维码解析
-const decodeQRCode = (image)=> {
-  //创建画布
-  const canvas = document.createElement('canvas');
-  const context = canvas.getContext('2d');
-  canvas.width = image.width;
-  canvas.height = image.height;
-  //把二维码画上去
-  context.drawImage(image, 0, 0, canvas.width, canvas.height);
-  const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-  const decodedResult = jsQR(imageData.data, imageData.width, imageData.height, {
-    inversionAttempts: 'dontInvert',
-  });
-  if (decodedResult) {
-    //返回识别结果
-    return decodedResult.data
-  } else {
-    window.alert('未识别到二维码!')
-    return ''
-  }
-}
-
 /**
  * 通过 url 请求分析
  * */
@@ -590,7 +567,7 @@ const qrcodeUpload = (response: any, uploadFile: UploadFile, uploadFiles: Upload
         image.src = e.target.result;
       }
       image.onload = () => {
-        let code = decodeQRCode(image);
+        let code = ImageUtils.decodeQRCode(image);
         console.log(code)//识别结果
         qrcodeData.value = code;
         RequestByURL(qrcodeData.value)
@@ -600,9 +577,9 @@ const qrcodeUpload = (response: any, uploadFile: UploadFile, uploadFiles: Upload
   }
 }
 
-//以下为对话框部分：
+// 以下为对话框部分：
 import { ElMessageBox } from 'element-plus'
-import { downloadPDF }   from './printPDF'
+import OutputUtils   from '@/utils/OutputUtils'
 import { AnalysisModel } from "@/model/AnalysisModel";
 
 const v2SignatureShow = ref(true)
@@ -708,31 +685,24 @@ const ClearReportValue = () => {
   imageUrls.value = []
 }
 
-const CancelUpload = () => {
+const CloseDialog = () => {
   dialogVisible.value = false
   ClearReportValue()
   StopTimer()
   UploadProgress.value = 0
-  cancelFileUpload.cancel()
 }
 
-const HandleClose = (done: () => void) => {
+/**
+ * 点击空白区域让 Dialog 关闭的回调函数
+ * */
+const HandleClose = () => {
   ElMessageBox.confirm('APK 未解析完毕，是否确认离开？')
-      .then(() => {
-        CancelUpload()
-      })
-      .catch(() => {
-      })
+    .then(() => { CloseDialog() })
+    .catch(() => {})
 }
 
-const ProofPDF = ()=>{
-  // let newstr = document.getElementById("Result").innerHTML;
-  // let oldstr = document.body.innerHTML;
-  // document.body.innerHTML = newstr;
-  // window.print();
-  // document.body.innerHTML = oldstr;
-  downloadPDF(document.getElementById("Result"),"检测报告")
-  CancelUpload();
+const ProofPDF = () => {
+  OutputUtils.downloadPDF(document.getElementById("Result"), "检测报告")
 }
 
 const ProofWord = () => {

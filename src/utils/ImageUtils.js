@@ -1,11 +1,26 @@
-import {Base64} from 'js-base64'
-
-const base64Decode = (base64) => {
-
+// 二维码解析
+const decodeQRCode = (image)=> {
+  // 创建画布
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  canvas.width = image.width;
+  canvas.height = image.height;
+  //把二维码画上去
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+  const decodedResult = jsQR(imageData.data, imageData.width, imageData.height, {
+    inversionAttempts: 'dontInvert',
+  });
+  if (decodedResult) {
+    //返回识别结果
+    return decodedResult.data
+  } else {
+    window.alert('未识别到二维码!')
+    return ''
+  }
 }
-
 const ImageUtils = {
-  base64Decode: base64Decode
+  decodeQRCode: decodeQRCode
 }
 
 export default ImageUtils

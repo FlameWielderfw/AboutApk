@@ -7,7 +7,6 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import axios from "axios";
 import router from "@/router/router.js";
 
-
 const app = createApp(App)
 // 注册所有图标
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
@@ -15,21 +14,12 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 }
 
 // 配置 Axios 的请求头
-axios.defaults.headers.common['Authorization'] = 'Bearer your_access_token'
-axios.defaults.headers.post['Content-Type'] = 'application/json'
-
-// 创建 Axios 实例
-const instance = axios.create({
-    baseURL: 'http://localhost:10315',
-    timeout: 10000, // 请求超时时间为10秒
-    headers: {
-        'Authorization': 'Bearer your_access_token',
-        'Content-Type': 'application/json'
-    }
-})
+axios.defaults.baseURL = import.meta.env.VITE_APP_API_URL;
+axios.defaults.headers.post['Content-Type'] = 'multipart/form-data'
+axios.defaults.timeout = 10000
 
 // 将 Axios 实例挂载到 Vue 实例上
-app.config.globalProperties.$http = instance
+// app.config.globalProperties.$axios = axios
 
 app.use(ElementPlus)
 app.use(router).mount('#app')

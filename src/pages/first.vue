@@ -2,17 +2,17 @@
   <el-container style="height:800px;width: 100%;position: absolute;left: 0;top: 0;">
     <el-header style="height:150px;width: 100%;margin-top: 50px">
       <el-row>
-        <text class="TEXT" >在线APK分析器</text>
+        <text class="TEXT">在线 APK 分析器</text>
       </el-row>
       <el-row>
-        <text  class="content">使用我们的在线APK分析器,您可以轻松分析和优化Android APK,快速识别出是否为违规软件。</text>
+        <text  class="content">使用我们的在线 APK 分析器，您可以轻松分析和优化 APK，快速识别出涉诈，涉赌，涉黄应用。</text>
       </el-row>
     </el-header>
     <el-main class="upload-container">
       <el-container>
         <el-aside style="width: 50%;height: 450px;display: flex;justify-content: center;flex-direction: column;align-items: center;">
           <el-card shadow="hover" class="UploadCard">
-            <el-text  class="title">多文件上传</el-text>
+            <el-text  class="title">离线分析模式</el-text>
             <el-upload
                 class="uploadBox"
                 drag
@@ -33,7 +33,7 @@
                   <h style="font-size: 20px;font-weight: 600">选择文件</h></el-button>
               </div>
               <div style="text-align: center;position: relative;top:80px">
-                <h style="color: gray">请将您的apk文件拖到这里</h>
+                <h style="color: gray">请将您的 APK 文件拖到这里</h>
               </div>
             </el-upload>
           </el-card>
@@ -41,7 +41,7 @@
         </el-aside>
         <el-main style="height: 450px;display: flex;justify-content: center;flex-direction: column;align-items: center;padding: 0">
           <el-card shadow="hover" class="UploadCard">
-            <el-text class="title" >单文件上传</el-text>
+            <el-text class="title" >互联网分析模式</el-text>
             <el-upload
                 class="uploadBox2"
                 drag
@@ -64,7 +64,7 @@
               </div>
             </el-upload>
             <el-row style="justify-content: center;top:20px;height: 100px;width: 100%" >
-              <el-input  v-model="input" style="width: 65%;height: 40px;margin-right: 20px;" placeholder="Please enter the URL" />
+              <el-input  v-model="input" style="width: 65%;height: 40px;margin-right: 20px;" placeholder="请输入 APK 所在的 URL" />
               <el-button style="position:relative;top:5px"  type="primary" color="#725feb" @click="UploadURL">上传</el-button>
             </el-row>
           </el-card>
@@ -73,7 +73,7 @@
 
       <div class="report" v-show="isShow">
         <el-table :data="tableData" style="width: 80%">
-          <el-table-column prop="name" label="APK文件名" width="240" />
+          <el-table-column prop="name" label="APK文件名" width="370" />
           <el-table-column prop="progress" label="上传进度" >
             <template #default="scope">
               <el-progress
@@ -88,8 +88,8 @@
           </el-table-column>
           <el-table-column prop="operation" label="操作">
             <template #default="scope">
-              <el-button type="primary" @click="Submit(scope.row)" :disabled="scope.row.submit" color="#725feb">查看分析结果</el-button>
-              <el-button type="danger" @click="ItemDelete(scope.row)">删除</el-button>
+              <el-button type="primary" @click="Submit(scope.row)" :disabled="scope.row.submit" color="#725feb">分析结果</el-button>
+              <el-button type="danger" @click="ItemDelete(scope.row)">删除条目</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -99,24 +99,12 @@
   </el-container>
   <el-dialog
       v-model="dialogVisible"
-      title="检测报告"
+      title="APP 检测报告"
       width="1000"
       height="80vh"
       style="border-radius: 8px"
       :before-close="HandleClose"
   >
-<!--    <span style="margin-left: 20px">上传进度</span>-->
-<!--    <el-progress-->
-<!--        v-if ="ProgressShow"-->
-<!--        :color="customColor"-->
-<!--        :stroke-width="7"-->
-<!--        :percentage="UploadProgress"-->
-<!--        style="margin-bottom: 20px;margin-right: 40px;margin-top: 15px">-->
-<!--    </el-progress>-->
-<!--    <el-row style="height: 50px;align-content: center;margin-left: 20px">-->
-<!--      <el-icon v-if="!ProgressShow" color="green" size="17px" style="position : relative; bottom : -2px"><circleCheck/></el-icon>-->
-<!--      <el-text v-if="!ProgressShow">上传成功</el-text>-->
-<!--    </el-row>-->
     <div id="Result" class="result-body">
       <section v-loading="true" v-show="staticLoading"
                style="height: 200px;justify-content: center;text-align: center"
@@ -132,12 +120,12 @@
                     <strong>基本信息</strong>
                   </div>
                   <div style="width: 40%">
-                    <strong>FILE INFORMATION</strong>
+                    <strong>文件基本信息</strong>
                     <br>
-                    <span class="badge">File Name</span>
+                    <span class="badge">文件名</span>
                     {{APK.file_name}}
                     <br>
-                    <span class="badge">Size</span>
+                    <span class="badge">大小</span>
                     {{APK.size}}MB
                     <br>
                     <span class="badge">md5</span>
@@ -150,12 +138,12 @@
                     {{v1SignatureInfo.sha256.replaceAll(" ","")}}
                   </div>
                   <div>
-                    <strong>APP INFORMATION</strong>
+                    <strong>应用基本信息</strong>
                     <br>
-                    <span class="badge">App Name</span>
+                    <span class="badge">应用名称</span>
                     {{APK.app_name}}
                     <br>
-                    <span class="badge">Package Name</span>
+                    <span class="badge">包名</span>
                     {{APK.package_name}}
                     <br>
                     <span class="badge">Target SDK</span>
@@ -171,15 +159,15 @@
             <div class="row-body">
               <el-card class="card" >
                 <strong>应用权限清单</strong>
-                <el-table :data="permissionData"  border style="width: 100%;margin-top: 5px">
-                  <el-table-column prop="permissions" sortable label="Permission" width="200"/>
-                  <el-table-column prop="status" label="STATUS" width="150">
+                <el-table :data="permissionData"  border style="width: 100%; margin-top: 5px">
+                  <el-table-column prop="permissions" sortable label="权限名称" width="200"/>
+                  <el-table-column prop="status" label="危险级别" width="150">
                     <template #default="scope" >
                       <span class="status" :style="{backgroundColor:GetColor(scope.row.status)}">{{scope.row.status}}</span>
                     </template>
                   </el-table-column>
-                  <el-table-column prop="info" label="INFO" width="200"/>
-                  <el-table-column prop="description" label="DESCRIPTION"/>
+                  <el-table-column prop="info" label="功能" width="200"/>
+                  <el-table-column prop="description" label="描述"/>
                 </el-table>
               </el-card>
             </div>
@@ -187,7 +175,7 @@
               <el-card class="card">
                 <div style="width: 100%;display: flex;flex-direction: row">
                   <div style="width: 50%;" >
-                    <strong>v2SignatureInfo</strong>
+                    <strong>签名信息 V2</strong>
                     <br>
                     <span class="badge">md5</span>
                     {{v2SignatureInfo.md5.replaceAll(" ","")}}
@@ -199,7 +187,7 @@
                     {{v2SignatureInfo.sha256.replaceAll(" ","")}}
                   </div>
                   <div style="width: 50%;" v-show="v3SignatureShow">
-                    <strong>v3SignatureInfo</strong>
+                    <strong>签名信息 V3</strong>
                     <br>
                     <span class="badge">md5</span>
                     {{v3SignatureInfo.md5.replaceAll(" ","")}}
@@ -275,14 +263,13 @@
     </div>
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="CancelUpload">Cancel</el-button>
+        <el-button @click="CancelUpload">关闭</el-button>
         <el-button type="primary" @click="ProofPDF">
           导出为pdf
         </el-button>
       </div>
     </template>
   </el-dialog>
-
 </template>
 
 <script lang="ts" setup>
@@ -295,10 +282,11 @@ import type {
   UploadRawFile,
   UploadUserFile
 } from 'element-plus'
-import {Document} from '@element-plus/icons-vue'
+import {CircleCheck, Document} from '@element-plus/icons-vue'
 import axios from "axios";
 import jsQR from 'jsqr';
 import DVM_PERMISSIONS from '@/data/dvm_permission';
+import AnalysisService from '@/service/AnalysisService'
 
 const BaseUrl = 'http://127.0.0.1:10315'
 let cancelFileUpload
@@ -315,8 +303,8 @@ const customColor = [
   { color: '#1989fa', percentage: 80 },
   { color: '#5cb87a', percentage: 100 },
 ]
-const tableData = ref([])
 
+const tableData = ref([])
 const fileList = ref<UploadUserFile[]>([])
 const UploadURL = () => {
   RequestByURL(input.value)
@@ -374,35 +362,26 @@ const ItemDelete = (row) =>{
 
 // 请求分析结果
 const RequestForReport = (analysisInfo: AnalysisModel) => {
-  const formData = new FormData();
-  formData.append('analysis_no', analysisInfo.analysisNum)
-  axios({
-    method: 'POST',
-    url: BaseUrl + '/api/get_result',
-    data: formData,
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  })
-      .then (response => {
-        const staticStatus = response.data.staticStatus
-        const dynamicStatus = response.data.dynamicStatus
-        if (staticStatus === "Success"){
+  AnalysisService.getResult(analysisInfo.analysisNum)
+      .then(response => {
+        const staticStatus = response.staticStatus
+        const dynamicStatus = response.dynamicStatus
+        if (staticStatus === "Success") {
           console.log('静态分析完成！')
-          GetStaticData(response.data.message)
+          GetStaticData(response.message)
           staticLoading.value = false
         }
         if (dynamicStatus === "Success") {
           console.log('动态分析完成！');
-          let Data = response.data.message
+          let Data = response.message
           urls.value = Data.urls.map((item: string) => {
             return {["url"]: item};
           });
           screenContent.value = Data.screenContent
           dynamicLoading.value = false
           StopTimer()
-          GetResult(analysisInfo)
           GetScreencaps(analysisInfo)
+          GetJudgeResult(analysisInfo)
         } else if (dynamicStatus !== "Analysing") {
           console.log("动态分析失败")
           StopTimer()
@@ -414,28 +393,22 @@ const RequestForReport = (analysisInfo: AnalysisModel) => {
 }
 
 // 获取判断结果
-function GetResult(analysisInfo: AnalysisModel){
-  const formData = new FormData();
-  formData.append('analysis_no', analysisInfo.analysisNum)
-  axios({
-    method: 'POST',
-    url: BaseUrl+'/api/get_judge_result',
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    },
-    data: formData
-  })
+const GetJudgeResult = (analysisInfo: AnalysisModel) => {
+  AnalysisService.getJudgeResult(analysisInfo.analysisNum)
       .then(response => {
         console.log('获取研判结果成功!');
-        let message = response.data.message
-        message.forEach((item, index)=>{
-          let parts = item.split('\n');
-          const result = {
-            val: parts[0],
-            reason: parts.slice(1).join('\n')
-          }
-          resultData.value.push(result);
-        })
+        const code = response.code
+        const message = response.message
+        if (code === 2000) {
+          message.forEach((item)=>{
+            let parts = item.split('\n');
+            const result = {
+              val: parts[0],
+              reason: parts.slice(1).join('\n')
+            }
+            resultData.value.push(result);
+          })
+        }
       })
       .catch(error => {
         console.error('获取结果失败！');
@@ -444,20 +417,11 @@ function GetResult(analysisInfo: AnalysisModel){
 }
 
 // 获取图片
-function GetScreencaps(analysisInfo: AnalysisModel){
-  const formData = new FormData();
-  formData.append('analysis_no', analysisInfo.analysisNum)
-  axios({
-    method: 'POST',
-    url: BaseUrl+'/api/get_screencaps',
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    },
-    data: formData
-  })
+const GetScreencaps = (analysisInfo: AnalysisModel) => {
+  AnalysisService.getScreencaps(analysisInfo.analysisNum)
       .then(response => {
         console.log('获取图片成功!');
-        response.data.message.forEach(url => {
+        response.message.forEach(url => {
           imageUrls.value.push(`${BaseUrl}${url}`);
         });
       })
@@ -467,8 +431,8 @@ function GetScreencaps(analysisInfo: AnalysisModel){
       });
 }
 
-// 定时发送请求
-function StartTimer(analysisInfo) {
+// 定时发送获取分析结果请求
+const StartTimer = (analysisInfo: AnalysisModel) => {
   if (!isTimerRunning.value) {
     isTimerRunning.value = true
     intervalId.value = setInterval(() => {
@@ -477,7 +441,7 @@ function StartTimer(analysisInfo) {
   }
 }
 
-function StopTimer() {
+const StopTimer = () => {
   if (intervalId.value) {
     clearInterval(intervalId.value)
     intervalId.value = null
@@ -488,6 +452,7 @@ function StopTimer() {
 const Submit = (row) => {
   dialogVisible.value = true
   const analysisInfo = UploadFiles.value.find((item)=> item.name === row.name)
+  console.log(analysisInfo)
   StartTimer(analysisInfo)
 
   // const formData = new FormData();
@@ -640,7 +605,6 @@ import { AnalysisModel } from "@/model/AnalysisModel";
 let v2SignatureShow = ref(true)
 let v3SignatureShow = ref(false)
 const dialogVisible = ref(false)
-let ProgressShow = ref(true)
 let staticLoading = ref(true)
 let dynamicLoading = ref(true)
 let imageUrls = ref([])
@@ -660,9 +624,9 @@ let VersionInfo = ref({
 
 let v1SignatureInfo = ref({
   subject:'CN=1',
-  md5:'66 BE DA 48 2C 14 5C 9B B6 FE A4 83 83 8C 1A E0',
-  sha1:'DE 57 DA 7A AC 68 9B E3 47 83 FA A0 10 9D 8C 9B 51 8D 83 74',
-  sha256:'63 AA 36 63 A1 EF DD 49 80 78 41 85 C1 E7 38 15 95 64 CB FF E3 EC 05 0C FC 46 90 AE 4B CB 52 BB'
+  md5:'66 BE DA 48 2C 14 5C',
+  sha1:'DE 57 DA 7A AC 68 9B',
+  sha256:'63 AA 36 63 A1 EF DD'
 })
 
 let v2SignatureInfo = ref({
@@ -698,12 +662,6 @@ const permissionData = ref([
     info:'send SMS messages',
     description:'Allows application to send SMS messages. Malicious applications may cost you money by sending messages without your confirmation'
   },
-  {
-    permissions:"android.permission.INTERNET",
-    status:'normal',
-    info:'send SMS messages',
-    description:'Allows application to send SMS messages. Malicious applications may cost you money by sending messages without your confirmation'
-  },
 ]);
 
 let urls = ref([
@@ -714,13 +672,9 @@ let urls = ref([
 let sdks = ref([
   {sdk:"com.bet8df.cloudtopapp.MainActivity"},
   {sdk:"android.content.ContentResolver"},
-  {sdk:"android.app.NotificationChannel"},
-  {sdk:"android.content.AsyncQueryHandler"},
-  {sdk:"java.lang.Class"},
-  {sdk:"com.bet8df.cloudtopapp.jpush.PushService"},
 ]);
 
-let screenContent = ref('正在处理线路... 检查更新 未知错误. 注册 登录 游戏推荐 首页 存款 优惠 客服 我的 推荐码 d9bb84 账号 请输入3-16位字母或数字组合 密码 请输入8-20位的数字组合 确认密码 真实姓名 请输入您的真实姓名 手机号码 请输入的您的手机号 微信号码 请输入的您的微信号 QQ号码 请输入的您的QQ号 立即注册 同意\\"金鼎娱乐城\\"所有规则与条款及隐私权政策\\" 友情提醒：每天充值一笔，打一倍流水薅彩金套利的会员，将不参与平台任何活动优惠！ 彩票 棋牌 真人 电子 捕鱼 体育 新幸运飞艇 IG赛车 AFB视讯 AG视讯 香港彩 KY棋牌 皇冠体育 紧急通知:近期风控较严如无法打开在线客服请添加QQ：1323316887。vx：jdjj1105咨询！ 再按一次退出应用 重要通知：由于国内断卡行动日益严重，防止您的银行卡被风控，建议您下载okpay虚拟币钱包或者万币钱包存取款，每天3次免费取款次数，虚拟币存款每笔赠送1%彩金，存款彩金需当天申请(只下注香港/澳门六合不送），钱包下载详情操作可以联系24小时在线客服。 请输入用户名 请输入密码 记住密码 忘记密码？ 立即登录 没账号?立即注册')
+let screenContent = ref('正在处理线路... 检查更新 未知错误. 注册 登录 游戏推荐 首页 存款 优惠 客服 我的 推荐码 d9bb84 账号')
 let resultData = ref([
   {
     val:'赌博',
@@ -730,17 +684,19 @@ let resultData = ref([
 
 const GetColor = (status)=>{
   let color = '#'
-  if(status == 'normal')
+  if (status === '正常')
     color = '#17a2b8'
-  if(status == 'dangerous')
+  else if (status === '危险')
     color = '#dc3545'
-  if(status == 'signatureOrSystem')
+  else if (status === 'signatureOrSystem')
     color = '#ffc107'
+  else
+    color = '#a775ff'
   return color
 }
 
-//重置报告中的值
-function ClearALl(){
+// 重置报告中的值
+const ClearReportValue = () => {
   staticLoading.value = true;
   dynamicLoading.value = true;
   APK.value = {
@@ -763,14 +719,14 @@ function ClearALl(){
 
 const CancelUpload = () => {
   dialogVisible.value = false
-  ClearALl()
+  ClearReportValue()
   StopTimer()
   UploadProgress.value = 0
   cancelFileUpload.cancel()
 }
 
 const HandleClose = (done: () => void) => {
-  ElMessageBox.confirm('apk尚未解析完毕，确认离开？')
+  ElMessageBox.confirm('APK 未解析完毕，是否确认离开？')
       .then(() => {
         CancelUpload()
       })

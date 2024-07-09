@@ -22,7 +22,7 @@ const ListClick = ()=> {
             <el-main>
               <el-row :gutter="20" font-size="calc(1rem + .3vw)">
                 <el-col :span="3" ><router-link to="/pages/first" >
-                  <el-text color="black" style="font-size: 15px">apk解析</el-text>
+                  <el-text color="black" style="font-size: 15px">APK解析</el-text>
                 </router-link></el-col>
                 <el-col :span="3"><router-link to="/pages/BlackList">
                   <el-text color="black" style="font-size: 15px">黑白名单</el-text>

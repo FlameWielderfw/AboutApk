@@ -13,13 +13,10 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
     app.component(key, component)
 }
 
-// 配置 Axios 的请求头
+// 配置 Axios 的默认请求参数
 axios.defaults.baseURL = import.meta.env.VITE_APP_API_URL;
 axios.defaults.headers.post['Content-Type'] = 'multipart/form-data'
 axios.defaults.timeout = 10000
-
-// 将 Axios 实例挂载到 Vue 实例上
-// app.config.globalProperties.$axios = axios
 
 app.use(ElementPlus)
 app.use(router).mount('#app')

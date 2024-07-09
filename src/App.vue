@@ -16,7 +16,7 @@ const ListClick = ()=> {
       <el-header class="head">
           <el-container >
             <el-aside style="text-align: center;padding-top: 10px;height: 100%" >
-              <img src="@/img/alby.svg " alt="My SVG"  style="top:5px;position: relative; right:5px;width: calc(1.275rem + .3vw)"/>
+              <img src="@/assets/alby.svg " alt="My SVG"  style="top:5px;position: relative; right:5px;width: calc(1.275rem + .3vw)"/>
               <text class="title">ApkDetector</text>
             </el-aside>
             <el-main>

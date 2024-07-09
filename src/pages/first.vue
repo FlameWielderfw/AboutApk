@@ -118,6 +118,10 @@
                 <div style="display: flex;flex-direction: row;">
                   <div style="width: 25%">
                     <strong>基本信息</strong>
+                    <el-image
+                        style="width: 100%; height: 150px"
+                        :src="iconImage">
+                    </el-image>
                   </div>
                   <div style="width: 40%">
                     <strong>文件基本信息</strong>
@@ -287,6 +291,7 @@ import axios from "axios";
 import jsQR from 'jsqr';
 import DVM_PERMISSIONS from '@/data/dvm_permission';
 import AnalysisService from '@/service/AnalysisService'
+import UrlUtils from '@/utils/UrlUtils'
 
 const BaseUrl = 'http://127.0.0.1:10315'
 let cancelFileUpload
@@ -297,6 +302,7 @@ const input = ref('')
 const isTimerRunning = ref(false)
 const intervalId = ref<number | null>(null)
 const UploadFiles = ref([])
+const iconImage = ref('')
 const customColor = [
   { color: '#f56c6c', percentage: 20 },
   { color: '#e6a23c', percentage: 40 },
@@ -363,33 +369,35 @@ const ItemDelete = (row) =>{
 // 请求分析结果
 const RequestForReport = (analysisInfo: AnalysisModel) => {
   AnalysisService.getResult(analysisInfo.analysisNum)
-      .then(response => {
-        const staticStatus = response.staticStatus
-        const dynamicStatus = response.dynamicStatus
-        if (staticStatus === "Success") {
-          console.log('静态分析完成！')
-          GetStaticData(response.message)
-          staticLoading.value = false
-        }
-        if (dynamicStatus === "Success") {
-          console.log('动态分析完成！');
-          let Data = response.message
-          urls.value = Data.urls.map((item: string) => {
-            return {["url"]: item};
-          });
-          screenContent.value = Data.screenContent
-          dynamicLoading.value = false
-          StopTimer()
-          GetScreencaps(analysisInfo)
-          GetJudgeResult(analysisInfo)
-        } else if (dynamicStatus !== "Analysing") {
-          console.log("动态分析失败")
-          StopTimer()
-        }
-      })
-      .catch(error => {
-        console.error('/api/get_result 发生错误:', error);
-      });
+    .then(response => {
+      const staticStatus = response.staticStatus
+      const dynamicStatus = response.dynamicStatus
+      const judgeStatus = response.judgeStatus
+      if (staticStatus === "Success") {
+        console.log('静态分析完成！')
+        GetStaticData(response.message)
+        staticLoading.value = false
+      }
+      if (dynamicStatus === "Success") {
+        console.log('动态分析完成！');
+        let Data = response.message
+        urls.value = Data.urls.map((item: string) => {
+          return {["url"]: item};
+        });
+        screenContent.value = Data.screenContent
+        dynamicLoading.value = false
+        GetScreencaps(analysisInfo)
+      } else if (dynamicStatus !== "Analysing") {
+        console.log("动态分析失败")
+      }
+      if (judgeStatus === "Success") {
+        GetJudgeResult(analysisInfo)
+        StopTimer()
+      }
+    })
+    .catch(error => {
+      console.error('/api/get_result 发生错误:', error);
+    });
 }
 
 // 获取判断结果
@@ -421,8 +429,8 @@ const GetScreencaps = (analysisInfo: AnalysisModel) => {
   AnalysisService.getScreencaps(analysisInfo.analysisNum)
       .then(response => {
         console.log('获取图片成功!');
-        response.message.forEach(url => {
-          imageUrls.value.push(`${BaseUrl}${url}`);
+        response.message.forEach(uri => {
+          imageUrls.value.push(UrlUtils.staticImageUrl(uri));
         });
       })
       .catch(error => {
@@ -452,36 +460,7 @@ const StopTimer = () => {
 const Submit = (row) => {
   dialogVisible.value = true
   const analysisInfo = UploadFiles.value.find((item)=> item.name === row.name)
-  console.log(analysisInfo)
   StartTimer(analysisInfo)
-
-  // const formData = new FormData();
-  // console.log(UploadFiles.value.find((item)=> item.name === row.name))
-  // formData.append('file', UploadFiles.value.find((item)=> item.name === row.name));
-  // cancelFileUpload = axios.CancelToken.source()
-  // axios({
-  //   method: 'POST',
-  //   url: BaseUrl + '/api/upload_apk',
-  //   data: formData,
-  //   headers: {
-  //     'Content-Type': 'multipart/form-data'
-  //   },
-  //   cancelToken: cancelFileUpload.token,
-  //   onUploadProgress: (progressEvent) => {
-  //     UploadProgress.value = Math.round((progressEvent.loaded / progressEvent.total) * 100)
-  //     console.log(UploadProgress.value)
-  //   }
-  // })
-  //     .then(response => {
-  //       console.log('上传apk成功!');
-  //       ProgressShow.value = false
-  //       analysisNum.value = response.data.message
-  //       startTimer()
-  //     })
-  //     .catch(error => {
-  //       console.error('Error uploading file:', error);
-  //       alert(error)
-  //     });
 }
 
 function GetStaticData(Data){
@@ -504,6 +483,7 @@ function GetStaticData(Data){
   v3SignatureInfo.value.md5 = Data.v3SignatureInfo.certification.md5
   v3SignatureInfo.value.sha1 = Data.v3SignatureInfo.certification.sha1
   v3SignatureInfo.value.sha256 = Data.v3SignatureInfo.certification.sha256
+  iconImage.value = Data.icon
 
   permissionData.value = Data.permissions.map(permission => {
     const package_list = permission.split(".");

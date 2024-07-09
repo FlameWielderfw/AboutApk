@@ -16,7 +16,7 @@
             <el-upload
                 class="uploadBox"
                 drag
-                action="http://127.0.0.1:10315/api/throwaway"
+                action="http://127.0.0.1:10315/api/upload_apk"
                 multiple
                 :show-file-list= "false"
                 v-model:file-list="fileList"
@@ -73,7 +73,7 @@
 
       <div class="report" v-show="isShow">
         <el-table :data="tableData" style="width: 80%">
-          <el-table-column prop="name" label="apk文件名" width="240" />
+          <el-table-column prop="name" label="APK文件名" width="240" />
           <el-table-column prop="progress" label="上传进度" >
             <template #default="scope">
               <el-progress
@@ -103,20 +103,20 @@
       width="1000"
       height="80vh"
       style="border-radius: 8px"
-      :before-close="handleClose"
+      :before-close="HandleClose"
   >
-    <span style="margin-left: 20px">上传进度</span>
-    <el-progress
-        v-if ="ProgressShow"
-        :color="customColor"
-        :stroke-width="7"
-        :percentage="UploadProgress"
-        style="margin-bottom: 20px;margin-right: 40px;margin-top: 15px">
-    </el-progress>
-    <el-row style="height: 50px;align-content: center;margin-left: 20px">
-      <el-icon v-if="!ProgressShow" color="green" size="17px" style="position : relative; bottom : -2px"><circleCheck/></el-icon>
-      <el-text v-if="!ProgressShow">上传成功</el-text>
-    </el-row>
+<!--    <span style="margin-left: 20px">上传进度</span>-->
+<!--    <el-progress-->
+<!--        v-if ="ProgressShow"-->
+<!--        :color="customColor"-->
+<!--        :stroke-width="7"-->
+<!--        :percentage="UploadProgress"-->
+<!--        style="margin-bottom: 20px;margin-right: 40px;margin-top: 15px">-->
+<!--    </el-progress>-->
+<!--    <el-row style="height: 50px;align-content: center;margin-left: 20px">-->
+<!--      <el-icon v-if="!ProgressShow" color="green" size="17px" style="position : relative; bottom : -2px"><circleCheck/></el-icon>-->
+<!--      <el-text v-if="!ProgressShow">上传成功</el-text>-->
+<!--    </el-row>-->
     <div id="Result" class="result-body">
       <section v-loading="true" v-show="staticLoading"
                style="height: 200px;justify-content: center;text-align: center"
@@ -300,7 +300,6 @@ import axios from "axios";
 import jsQR from 'jsqr';
 import DVM_PERMISSIONS from '@/data/dvm_permission';
 
-let analysisNum = ref()
 const BaseUrl = 'http://127.0.0.1:10315'
 let cancelFileUpload
 let isShow = ref(false)
@@ -319,7 +318,7 @@ const customColor = [
 const tableData = ref([])
 
 const fileList = ref<UploadUserFile[]>([])
-const UploadURL = ()=>{
+const UploadURL = () => {
   RequestByURL(input.value)
 }
 
@@ -339,7 +338,7 @@ const handleProgress = (evt: UploadProgressEvent, uploadFile: UploadFile, upload
 
 const handleBeforeUpload = (rawFile: UploadRawFile) => {
   tableData.value.push({
-    name:rawFile.name,
+    name: rawFile.name,
     progress: 0,
     deleted : false,
     submit : true
@@ -347,16 +346,25 @@ const handleBeforeUpload = (rawFile: UploadRawFile) => {
   return true; // 返回 true 继续上传
 };
 
+/**
+ * 上传 apk 成功处理逻辑
+ * */
 const handleUploadSuccess = (response: any, uploadFile: UploadFile, uploadFiles: UploadFiles) => {
-  // 上传成功时,更新 uploadedFiles 数据列表
-  console.log("分析号为" + response.message)  // 该分析号需要保存
-  UploadFiles.value.push(uploadFile.raw);
+  // 上传成功时, 更新 uploadedFiles 数据列表
+  const uploadFileInfo: AnalysisModel = {
+    name: uploadFile.raw.name,
+    analysisNum: response.message  // TODO 这里 response.code 若不为 2000 需要处理
+  }
+  UploadFiles.value.push(uploadFileInfo);
   tableData.value.find((item) => item.name === uploadFile.name).progress = 101;
   tableData.value.find((item) => item.name === uploadFile.name).submit = false;
 }
 
+/**
+ * apk 文件上传失败处理逻辑
+ * */
 const handleErrorUpload = (error: Error, uploadFile: UploadFile, uploadFiles: UploadFiles) => {
-  alert(uploadFile.name + "上传失败！")
+  alert(`${uploadFile.name} 上传失败, 失败原因: ${error}`)
   tableData.value = tableData.value.filter((item) => item.name !== uploadFile.name);
 }
 
@@ -365,12 +373,12 @@ const ItemDelete = (row) =>{
 }
 
 // 请求分析结果
-const RequestForReport=()=>{
+const RequestForReport = (analysisInfo: AnalysisModel) => {
   const formData = new FormData();
-  formData.append('analysis_no', analysisNum.value)
+  formData.append('analysis_no', analysisInfo.analysisNum)
   axios({
     method: 'POST',
-    url: BaseUrl+'/api/get_result',
+    url: BaseUrl + '/api/get_result',
     data: formData,
     headers: {
       'Content-Type': 'multipart/form-data'
@@ -387,28 +395,28 @@ const RequestForReport=()=>{
         if (dynamicStatus === "Success") {
           console.log('动态分析完成！');
           let Data = response.data.message
-          urls.value = Data.urls.map((item, index) => {
+          urls.value = Data.urls.map((item: string) => {
             return {["url"]: item};
           });
           screenContent.value = Data.screenContent
           dynamicLoading.value = false
-          stopTimer()
-          Get_result()
-          Get_images()
+          StopTimer()
+          GetResult(analysisInfo)
+          GetScreencaps(analysisInfo)
         } else if (dynamicStatus !== "Analysing") {
           console.log("动态分析失败")
-          stopTimer()
+          StopTimer()
         }
       })
       .catch(error => {
-        console.error('Error uploading file:', error);
+        console.error('/api/get_result 发生错误:', error);
       });
 }
 
-//获取判断结果
-function Get_result(){
+// 获取判断结果
+function GetResult(analysisInfo: AnalysisModel){
   const formData = new FormData();
-  formData.append('analysis_no', analysisNum.value)
+  formData.append('analysis_no', analysisInfo.analysisNum)
   axios({
     method: 'POST',
     url: BaseUrl+'/api/get_judge_result',
@@ -436,9 +444,9 @@ function Get_result(){
 }
 
 // 获取图片
-function Get_images(){
+function GetScreencaps(analysisInfo: AnalysisModel){
   const formData = new FormData();
-  formData.append('analysis_no', analysisNum.value)
+  formData.append('analysis_no', analysisInfo.analysisNum)
   axios({
     method: 'POST',
     url: BaseUrl+'/api/get_screencaps',
@@ -460,16 +468,16 @@ function Get_images(){
 }
 
 // 定时发送请求
-function startTimer() {
+function StartTimer(analysisInfo) {
   if (!isTimerRunning.value) {
     isTimerRunning.value = true
     intervalId.value = setInterval(() => {
-      RequestForReport()
-    }, 5000) // 每 5 秒钟发送一次请求
+      RequestForReport(analysisInfo)
+    }, 5000)  // 每 5 秒钟发送一次请求
   }
 }
 
-function stopTimer() {
+function StopTimer() {
   if (intervalId.value) {
     clearInterval(intervalId.value)
     intervalId.value = null
@@ -478,35 +486,37 @@ function stopTimer() {
 }
 
 const Submit = (row) => {
-  console.log(row)
   dialogVisible.value = true
-  const formData = new FormData();
-  console.log(UploadFiles.value.find((item)=> item.name === row.name))
-  formData.append('file', UploadFiles.value.find((item)=> item.name === row.name));
-  cancelFileUpload = axios.CancelToken.source()
-  axios({
-    method: 'POST',
-    url: BaseUrl + '/api/upload_apk',
-    data: formData,
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    },
-    cancelToken: cancelFileUpload.token,
-    onUploadProgress: (progressEvent) => {
-      UploadProgress.value = Math.round((progressEvent.loaded / progressEvent.total) * 100)
-      console.log(UploadProgress.value)
-    }
-  })
-      .then(response => {
-        console.log('上传apk成功!');
-        ProgressShow.value = false
-        analysisNum.value = response.data.message
-        startTimer()
-      })
-      .catch(error => {
-        console.error('Error uploading file:', error);
-        alert(error)
-      });
+  const analysisInfo = UploadFiles.value.find((item)=> item.name === row.name)
+  StartTimer(analysisInfo)
+
+  // const formData = new FormData();
+  // console.log(UploadFiles.value.find((item)=> item.name === row.name))
+  // formData.append('file', UploadFiles.value.find((item)=> item.name === row.name));
+  // cancelFileUpload = axios.CancelToken.source()
+  // axios({
+  //   method: 'POST',
+  //   url: BaseUrl + '/api/upload_apk',
+  //   data: formData,
+  //   headers: {
+  //     'Content-Type': 'multipart/form-data'
+  //   },
+  //   cancelToken: cancelFileUpload.token,
+  //   onUploadProgress: (progressEvent) => {
+  //     UploadProgress.value = Math.round((progressEvent.loaded / progressEvent.total) * 100)
+  //     console.log(UploadProgress.value)
+  //   }
+  // })
+  //     .then(response => {
+  //       console.log('上传apk成功!');
+  //       ProgressShow.value = false
+  //       analysisNum.value = response.data.message
+  //       startTimer()
+  //     })
+  //     .catch(error => {
+  //       console.error('Error uploading file:', error);
+  //       alert(error)
+  //     });
 }
 
 function GetStaticData(Data){
@@ -531,13 +541,15 @@ function GetStaticData(Data){
   v3SignatureInfo.value.sha256 = Data.v3SignatureInfo.certification.sha256
 
   permissionData.value = Data.permissions.map(permission => {
-    let package_list = permission.split(".");
+    const package_list = permission.split(".");
     const permission_name = package_list[package_list.length - 1];
+    console.log(permission_name)
+    const permission_info = DVM_PERMISSIONS[permission_name] === undefined ? ['未知', '未知', '未知'] : DVM_PERMISSIONS[permission_name]
     return {
       permissions: permission_name,
-      status: DVM_PERMISSIONS[permission_name][0],
-      info: DVM_PERMISSIONS[permission_name][1],
-      description: DVM_PERMISSIONS[permission_name][2]
+      status: permission_info[0],
+      info: permission_info[1],
+      description: permission_info[2]
     };
   });
 
@@ -571,12 +583,16 @@ const decodeQRCode = (image)=> {
     return ''
   }
 }
-const RequestByURL = (text)=>{
+
+/**
+ * 通过 url 请求分析
+ * */
+const RequestByURL = (url: string)=>{
   const formData = new FormData();
-  formData.append('url',text)
+  formData.append('url', url)
   axios({
     method: 'POST',
-    url: BaseUrl+'/api/upload_url',
+    url: BaseUrl + '/api/upload_url',
     data:formData,
     headers: {
       'Content-Type': 'multipart/form-data'
@@ -585,14 +601,17 @@ const RequestByURL = (text)=>{
       .then(response => {
         console.log('File uploaded successfully!');
         dialogVisible.value = true
-        analysisNum.value = response.data.message
-        startTimer()
+        StartTimer({
+          name: url,
+          analysisNum: response.data.message
+        })
       })
       .catch(error => {
         console.error('Error uploading file:', error);
         alert('上传失败！')
       });
 }
+
 const qrcodeUpload = (response: any, uploadFile: UploadFile, uploadFiles: UploadFiles)=>{
   const file = uploadFile.raw;
   if (file) {
@@ -616,6 +635,7 @@ const qrcodeUpload = (response: any, uploadFile: UploadFile, uploadFiles: Upload
 //以下为对话框部分：
 import { ElMessageBox } from 'element-plus'
 import { downloadPDF }   from './printPDF'
+import { AnalysisModel } from "@/model/AnalysisModel";
 
 let v2SignatureShow = ref(true)
 let v3SignatureShow = ref(false)
@@ -623,15 +643,15 @@ const dialogVisible = ref(false)
 let ProgressShow = ref(true)
 let staticLoading = ref(true)
 let dynamicLoading = ref(true)
-let imageUrls = ref([
+let imageUrls = ref([])
 
-])
 let APK = ref({
   file_name:'1ace25ed992a997d43362ed4f0665e95.apk',
   app_name:'金鼎娱乐城',
   size:520.1314,
   package_name:'com.cashwebappjinDingYLC',
 })
+
 let VersionInfo = ref({
   minSDKVersion: 14,
   TargetSDKVersion: 28,
@@ -644,18 +664,21 @@ let v1SignatureInfo = ref({
   sha1:'DE 57 DA 7A AC 68 9B E3 47 83 FA A0 10 9D 8C 9B 51 8D 83 74',
   sha256:'63 AA 36 63 A1 EF DD 49 80 78 41 85 C1 E7 38 15 95 64 CB FF E3 EC 05 0C FC 46 90 AE 4B CB 52 BB'
 })
+
 let v2SignatureInfo = ref({
   subject:'',
   md5:'',
   sha1:'',
   sha256:''
 })
+
 let v3SignatureInfo = ref({
   subject:'',
   md5:'',
   sha1:'',
   sha256:''
 })
+
 const permissionData = ref([
   {
     permissions:"android.permission.INTERNET",
@@ -681,11 +704,13 @@ const permissionData = ref([
     info:'send SMS messages',
     description:'Allows application to send SMS messages. Malicious applications may cost you money by sending messages without your confirmation'
   },
-])
+]);
+
 let urls = ref([
   {url:"http://47.108.138.165:8081/fingByKey/CirjDDDK",},
   {url:"https://aa.41yd.bet"}
-])
+]);
+
 let sdks = ref([
   {sdk:"com.bet8df.cloudtopapp.MainActivity"},
   {sdk:"android.content.ContentResolver"},
@@ -693,14 +718,16 @@ let sdks = ref([
   {sdk:"android.content.AsyncQueryHandler"},
   {sdk:"java.lang.Class"},
   {sdk:"com.bet8df.cloudtopapp.jpush.PushService"},
-])
+]);
+
 let screenContent = ref('正在处理线路... 检查更新 未知错误. 注册 登录 游戏推荐 首页 存款 优惠 客服 我的 推荐码 d9bb84 账号 请输入3-16位字母或数字组合 密码 请输入8-20位的数字组合 确认密码 真实姓名 请输入您的真实姓名 手机号码 请输入的您的手机号 微信号码 请输入的您的微信号 QQ号码 请输入的您的QQ号 立即注册 同意\\"金鼎娱乐城\\"所有规则与条款及隐私权政策\\" 友情提醒：每天充值一笔，打一倍流水薅彩金套利的会员，将不参与平台任何活动优惠！ 彩票 棋牌 真人 电子 捕鱼 体育 新幸运飞艇 IG赛车 AFB视讯 AG视讯 香港彩 KY棋牌 皇冠体育 紧急通知:近期风控较严如无法打开在线客服请添加QQ：1323316887。vx：jdjj1105咨询！ 再按一次退出应用 重要通知：由于国内断卡行动日益严重，防止您的银行卡被风控，建议您下载okpay虚拟币钱包或者万币钱包存取款，每天3次免费取款次数，虚拟币存款每笔赠送1%彩金，存款彩金需当天申请(只下注香港/澳门六合不送），钱包下载详情操作可以联系24小时在线客服。 请输入用户名 请输入密码 记住密码 忘记密码？ 立即登录 没账号?立即注册')
 let resultData = ref([
   {
     val:'赌博',
     reason:'应用存在关键词：彩票\n应用存在关键词：投注'
   }
-])
+]);
+
 const GetColor = (status)=>{
   let color = '#'
   if(status == 'normal')
@@ -711,6 +738,7 @@ const GetColor = (status)=>{
     color = '#ffc107'
   return color
 }
+
 //重置报告中的值
 function ClearALl(){
   staticLoading.value = true;
@@ -732,23 +760,24 @@ function ClearALl(){
   resultData.value = []
   imageUrls.value = []
 }
-const CancelUpload = ()=>{
-  cancelFileUpload.cancel()
-  ClearALl()
-  stopTimer()
+
+const CancelUpload = () => {
   dialogVisible.value = false
+  ClearALl()
+  StopTimer()
   UploadProgress.value = 0
+  cancelFileUpload.cancel()
 }
-const handleClose = (done: () => void) => {
-  const text = 'apk尚未解析完毕，确认离开？'
-  ElMessageBox.confirm(text)
+
+const HandleClose = (done: () => void) => {
+  ElMessageBox.confirm('apk尚未解析完毕，确认离开？')
       .then(() => {
         CancelUpload()
       })
       .catch(() => {
-        // catch error
       })
 }
+
 const ProofPDF=()=>{
   // let newstr = document.getElementById("Result").innerHTML;
   // let oldstr = document.body.innerHTML;
@@ -758,6 +787,7 @@ const ProofPDF=()=>{
   downloadPDF(document.getElementById("Result"),"检测报告")
   CancelUpload();
 }
+
 //监测某些值的变化
 watchEffect(() => {
   isShow.value = tableData.value.length > 0;

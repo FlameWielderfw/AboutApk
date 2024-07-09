@@ -16,7 +16,7 @@
             <el-upload
                 class="uploadBox"
                 drag
-                action="https://1bd345dd-1f51-4fb4-b640-7853dccf5a32.mock.pstmn.io/getapk"
+                action="http://127.0.0.1:10315/api/throwaway"
                 multiple
                 :show-file-list= "false"
                 v-model:file-list="fileList"
@@ -73,7 +73,7 @@
 
       <div class="report" v-show="isShow">
         <el-table :data="tableData" style="width: 80%">
-          <el-table-column prop="name" label="apk名字" width="240" />
+          <el-table-column prop="name" label="apk文件名" width="240" />
           <el-table-column prop="progress" label="上传进度" >
             <template #default="scope">
               <el-progress
@@ -88,7 +88,7 @@
           </el-table-column>
           <el-table-column prop="operation" label="操作">
             <template #default="scope">
-              <el-button type="primary" @click="Submit(scope.row)" :disabled="scope.row.submit" color="#725feb">提交检查</el-button>
+              <el-button type="primary" @click="Submit(scope.row)" :disabled="scope.row.submit" color="#725feb">查看分析结果</el-button>
               <el-button type="danger" @click="ItemDelete(scope.row)">删除</el-button>
             </template>
           </el-table-column>
@@ -240,7 +240,7 @@
               </el-card>
             </div><div class="row-body">
             <el-card class="card">
-              <strong>App内可疑文字</strong>
+              <strong>App内可疑文本</strong>
               <br>
               {{screenContent}}
             </el-card>
@@ -284,8 +284,9 @@
   </el-dialog>
 
 </template>
+
 <script lang="ts" setup>
-import {computed, onMounted, ref, watchEffect} from 'vue'
+import {ref, watchEffect} from 'vue'
 import type {
   UploadFile,
   UploadFiles,
@@ -294,9 +295,10 @@ import type {
   UploadRawFile,
   UploadUserFile
 } from 'element-plus'
-import {CircleCheck, Document, Upload} from '@element-plus/icons-vue'
+import {Document} from '@element-plus/icons-vue'
 import axios from "axios";
-import jsQR from 'jsqr'
+import jsQR from 'jsqr';
+import DVM_PERMISSIONS from '@/data/dvm_permission';
 
 let analysisNum = ref()
 const BaseUrl = 'http://127.0.0.1:10315'
@@ -320,12 +322,12 @@ const fileList = ref<UploadUserFile[]>([])
 const UploadURL = ()=>{
   RequestByURL(input.value)
 }
+
 const progressShow = (row) =>{
   return row.progress < 100;
-
 }
-const handleChange: UploadProps['onChange'] = (uploadFile, uploadFiles) => {
 
+const handleChange: UploadProps['onChange'] = (uploadFile, uploadFiles) => {
   fileList.value = fileList.value.slice(-3);
 }
 
@@ -336,7 +338,6 @@ const handleProgress = (evt: UploadProgressEvent, uploadFile: UploadFile, upload
 }
 
 const handleBeforeUpload = (rawFile: UploadRawFile) => {
-  console.log('即将上传')
   tableData.value.push({
     name:rawFile.name,
     progress: 0,
@@ -345,24 +346,28 @@ const handleBeforeUpload = (rawFile: UploadRawFile) => {
   })
   return true; // 返回 true 继续上传
 };
+
 const handleUploadSuccess = (response: any, uploadFile: UploadFile, uploadFiles: UploadFiles) => {
   // 上传成功时,更新 uploadedFiles 数据列表
-  console.log(uploadFile.name+"上传成功");
+  console.log("分析号为" + response.message)  // 该分析号需要保存
   UploadFiles.value.push(uploadFile.raw);
   tableData.value.find((item) => item.name === uploadFile.name).progress = 101;
   tableData.value.find((item) => item.name === uploadFile.name).submit = false;
 }
+
 const handleErrorUpload = (error: Error, uploadFile: UploadFile, uploadFiles: UploadFiles) => {
   alert(uploadFile.name + "上传失败！")
   tableData.value = tableData.value.filter((item) => item.name !== uploadFile.name);
 }
+
 const ItemDelete = (row) =>{
   tableData.value = tableData.value.filter((item) => item.name !== row.name);
 }
-//请求动态分析结果
+
+// 请求分析结果
 const RequestForReport=()=>{
   const formData = new FormData();
-  formData.append('analysis_no',analysisNum.value)
+  formData.append('analysis_no', analysisNum.value)
   axios({
     method: 'POST',
     url: BaseUrl+'/api/get_result',
@@ -389,6 +394,7 @@ const RequestForReport=()=>{
           dynamicLoading.value = false
           stopTimer()
           Get_result()
+          Get_images()
         } else if (dynamicStatus !== "Analysing") {
           console.log("动态分析失败")
           stopTimer()
@@ -398,22 +404,29 @@ const RequestForReport=()=>{
         console.error('Error uploading file:', error);
       });
 }
+
 //获取判断结果
 function Get_result(){
+  const formData = new FormData();
+  formData.append('analysis_no', analysisNum.value)
   axios({
     method: 'POST',
     url: BaseUrl+'/api/get_judge_result',
     headers: {
       'Content-Type': 'multipart/form-data'
     },
+    data: formData
   })
       .then(response => {
         console.log('获取研判结果成功!');
         let message = response.data.message
-        message.forEach((item,index)=>{
+        message.forEach((item, index)=>{
           let parts = item.split('\n');
-          resultData[index].val = parts[0];
-          resultData[index].reason = parts.slice(1).join('\n');
+          const result = {
+            val: parts[0],
+            reason: parts.slice(1).join('\n')
+          }
+          resultData.value.push(result);
         })
       })
       .catch(error => {
@@ -421,14 +434,18 @@ function Get_result(){
         alert(error)
       });
 }
-//获取图片
+
+// 获取图片
 function Get_images(){
+  const formData = new FormData();
+  formData.append('analysis_no', analysisNum.value)
   axios({
     method: 'POST',
     url: BaseUrl+'/api/get_screencaps',
     headers: {
       'Content-Type': 'multipart/form-data'
     },
+    data: formData
   })
       .then(response => {
         console.log('获取图片成功!');
@@ -441,7 +458,8 @@ function Get_images(){
         alert(error)
       });
 }
-//定时发送请求
+
+// 定时发送请求
 function startTimer() {
   if (!isTimerRunning.value) {
     isTimerRunning.value = true
@@ -460,6 +478,7 @@ function stopTimer() {
 }
 
 const Submit = (row) => {
+  console.log(row)
   dialogVisible.value = true
   const formData = new FormData();
   console.log(UploadFiles.value.find((item)=> item.name === row.name))
@@ -467,7 +486,7 @@ const Submit = (row) => {
   cancelFileUpload = axios.CancelToken.source()
   axios({
     method: 'POST',
-    url: BaseUrl+'/api/upload_apk',
+    url: BaseUrl + '/api/upload_apk',
     data: formData,
     headers: {
       'Content-Type': 'multipart/form-data'
@@ -483,8 +502,6 @@ const Submit = (row) => {
         ProgressShow.value = false
         analysisNum.value = response.data.message
         startTimer()
-        //tableData.value = tableData.value.filter((item) => item.name !== row.name);
-        //UploadFiles.value = UploadFiles.value.filter((item) => item.name !== row.name);
       })
       .catch(error => {
         console.error('Error uploading file:', error);
@@ -513,17 +530,21 @@ function GetStaticData(Data){
   v3SignatureInfo.value.sha1 = Data.v3SignatureInfo.certification.sha1
   v3SignatureInfo.value.sha256 = Data.v3SignatureInfo.certification.sha256
 
-  permissionData.value = Object.keys(Data.permissions).map(key => {
+  permissionData.value = Data.permissions.map(permission => {
+    let package_list = permission.split(".");
+    const permission_name = package_list[package_list.length - 1];
     return {
-      permissions: key,
-      status: Data.permissions[key][0],
-      info: Data.permissions[key][1],
-      description: Data.permissions[key][2]
+      permissions: permission_name,
+      status: DVM_PERMISSIONS[permission_name][0],
+      info: DVM_PERMISSIONS[permission_name][1],
+      description: DVM_PERMISSIONS[permission_name][2]
     };
   });
+
   urls.value = Data.urls.map((item, index) => {
     return {["url"]: item};
   });
+
   sdks.value = Data.sdks.map((item, index) => {
     return {["sdk"]: item};
   });
@@ -742,7 +763,6 @@ watchEffect(() => {
   isShow.value = tableData.value.length > 0;
   v2SignatureShow.value = v2SignatureInfo.value.md5 != '';
   v3SignatureShow.value = v3SignatureInfo.value.md5 != '';
-
 });
 </script>
 

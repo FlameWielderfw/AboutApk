@@ -27,13 +27,14 @@
                 :on-error="handleErrorUpload"
                 :accept="'.apk,.jpg,.jpeg,.png,'"
             >
-              <div style="text-align: center;position: relative;top:60px">
-                <el-button type="primary" color="#725feb" size="mini" style="width: 220px;height: 60px">
+              <div style="text-align: center; position: relative; top:60px">
+                <el-button type="primary" color="#725feb" size="small" style="width: 220px;height: 60px">
                   <el-icon size="20px"><Document /></el-icon>
-                  <h style="font-size: 20px;font-weight: 600">选择文件</h></el-button>
+                  <p style="font-size: 20px; font-weight: 600">选择文件</p>
+                </el-button>
               </div>
-              <div style="text-align: center;position: relative;top:80px">
-                <h style="color: gray">请将您的 APK 文件拖到这里</h>
+              <div style="text-align: center; position: relative; top:80px">
+                <p style="color: gray">请将您的 APK 文件拖到这里</p>
               </div>
             </el-upload>
           </el-card>
@@ -54,13 +55,14 @@
                 :limit = 1
                 :accept="'.jpg,.jpeg,.png,'"
             >
-              <div style="text-align: center;position: relative;top:60px">
-                <el-button type="primary" color="#725feb" size="mini" style="width: 180px;height: 50px">
-                  <el-icon size="20px"><Document /></el-icon>
-                  <h style="font-size: 16px;font-weight: 550">选择二维码</h></el-button>
+              <div style="text-align: center; position: relative; top:60px">
+                <el-button type="primary" color="#725feb" size="small" style="width: 220px;height: 60px">
+                  <el-icon size="20px"><FullScreen /></el-icon>
+                  <p style="font-size: 20px;font-weight: 600">选择二维码</p>
+                </el-button>
               </div>
               <div style="text-align: center;position: relative;top:80px">
-                <h style="color: gray">请将您的二维码拖到这里</h>
+                <p style="color: gray">请将您的二维码拖到这里</p>
               </div>
             </el-upload>
             <el-row style="justify-content: center;top:20px;height: 100px;width: 100%" >
@@ -305,7 +307,7 @@ import type {
   UploadRawFile,
   UploadUserFile
 } from 'element-plus'
-import {CircleCheck, Document} from '@element-plus/icons-vue'
+import {CircleCheck, Document, FullScreen} from '@element-plus/icons-vue'
 import axios from "axios";
 import DVM_PERMISSIONS from '@/data/dvm_permission';
 import AnalysisService from '@/service/AnalysisService'

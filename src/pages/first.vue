@@ -95,8 +95,8 @@
         </el-table>
       </div>
     </el-main>
-
   </el-container>
+
   <el-dialog
       v-model="dialogVisible"
       title="APP 检测报告"
@@ -106,6 +106,7 @@
       :before-close="HandleClose"
   >
     <div id="Result" class="result-body">
+<!--      静态分析加载界面-->
       <section v-loading="true" v-show="staticLoading"
                style="height: 200px;justify-content: center;text-align: center"
                element-loading-text="静态分析中，请耐心等待.....">
@@ -115,15 +116,17 @@
           <div class="row">
             <div class="row-body">
               <el-card class="card">
-                <div style="display: flex;flex-direction: row;">
-                  <div style="width: 25%">
-                    <strong>基本信息</strong>
+                <div style="display: flex; flex-direction: row;">
+                  <div style="width: 18%; display: flex; flex-direction: column;">
+                    <strong>图标</strong>
                     <el-image
-                        style="width: 100%; height: 150px"
-                        :src="iconImage">
+                        style="width: 60%; margin-top: 5px"
+                        :src="iconImage"
+                        fit="cover"
+                    >
                     </el-image>
                   </div>
-                  <div style="width: 40%">
+                  <div style="width: 45%">
                     <strong>文件基本信息</strong>
                     <br>
                     <span class="badge">文件名</span>
@@ -208,8 +211,10 @@
           </div>
         </div>
       </section>
+
+<!--      动态分析加载界面 -->
       <section v-loading="true" v-show="staticLoading!==dynamicLoading"
-               style="height: 200px;text-align: center;justify-content: center;"
+               style="height: 200px; text-align: center; justify-content: center;"
                element-loading-text="动态分析中，请耐心等待.....">
       </section>
       <section v-show="!dynamicLoading">
@@ -230,37 +235,48 @@
                   <el-table-column prop="sdk" label="SDK"/>
                 </el-table>
               </el-card>
-            </div><div class="row-body">
+            </div>
+            <div class="row-body">
             <el-card class="card">
               <strong>App内可疑文本</strong>
               <br>
               {{screenContent}}
             </el-card>
           </div>
-            <div class="row-body">
-              <el-card class="card">
-                <strong>研判结果</strong>
+          </div>
+        </div>
+      </section>
+
+<!--      研判加载界面 -->
+      <section v-loading="true" v-show="judgeLoading === true && staticLoading === true && dynamicLoading === true"
+               style="height: 200px; text-align: center; justify-content: center;"
+               element-loading-text="研判中，请耐心等待.....">
+      </section>
+      <section v-show="!judgeLoading">
+        <div class="row">
+          <div class="row-body">
+            <el-card class="card">
+              <strong>研判结果</strong>
+              <br>
+              <div v-for="item in resultData">
+                涉及{{item.val}}
                 <br>
-                <div v-for="item in resultData">
-                  涉及{{item.val}}
+                <el-text style="font-weight: 550">判断原因为:</el-text>
+                <br>
+                <el-text v-for="reason in item.reason.split('\n')">
+                  {{reason}}
                   <br>
-                  <el-text style="font-weight: 550">判断原因为:</el-text>
-                  <br>
-                  <el-text v-for="reason in item.reason.split('\n')">
-                    {{reason}}
-                    <br>
-                  </el-text>
+                </el-text>
+              </div>
+              <br>
+              <strong>违规图片</strong>
+              <br>
+              <div class="image-grid">
+                <div v-for="(imageUrl, index) in imageUrls" :key="index" class="image-container">
+                  <img :src="imageUrl" alt="Image" class="image">
                 </div>
-                <br>
-                <strong>违规图片</strong>
-                <br>
-                <div class="image-grid">
-                  <div v-for="(imageUrl, index) in imageUrls" :key="index" class="image-container">
-                    <img :src="imageUrl" alt="Image" class="image">
-                  </div>
-                </div>
-              </el-card>
-            </div>
+              </div>
+            </el-card>
           </div>
         </div>
       </section>
@@ -270,6 +286,9 @@
         <el-button @click="CancelUpload">关闭</el-button>
         <el-button type="primary" @click="ProofPDF">
           导出为pdf
+        </el-button>
+        <el-button type="primary" @click="ProofWord">
+          导出为word
         </el-button>
       </div>
     </template>
@@ -380,18 +399,22 @@ const RequestForReport = (analysisInfo: AnalysisModel) => {
       }
       if (dynamicStatus === "Success") {
         console.log('动态分析完成！');
-        let Data = response.message
+        const Data = response.message
         urls.value = Data.urls.map((item: string) => {
           return {["url"]: item};
         });
         screenContent.value = Data.screenContent
         dynamicLoading.value = false
-        GetScreencaps(analysisInfo)
       } else if (dynamicStatus !== "Analysing") {
         console.log("动态分析失败")
       }
       if (judgeStatus === "Success") {
         GetJudgeResult(analysisInfo)
+        GetScreencaps(analysisInfo)
+        judgeLoading.value = false
+        StopTimer()
+      } else if (judgeStatus !== "Judging") {
+        console.log("研判失败")
         StopTimer()
       }
     })
@@ -483,7 +506,7 @@ function GetStaticData(Data){
   v3SignatureInfo.value.md5 = Data.v3SignatureInfo.certification.md5
   v3SignatureInfo.value.sha1 = Data.v3SignatureInfo.certification.sha1
   v3SignatureInfo.value.sha256 = Data.v3SignatureInfo.certification.sha256
-  iconImage.value = Data.icon
+  iconImage.value = "data:image/png;base64," + Data.icon
 
   permissionData.value = Data.permissions.map(permission => {
     const package_list = permission.split(".");
@@ -582,31 +605,32 @@ import { ElMessageBox } from 'element-plus'
 import { downloadPDF }   from './printPDF'
 import { AnalysisModel } from "@/model/AnalysisModel";
 
-let v2SignatureShow = ref(true)
-let v3SignatureShow = ref(false)
+const v2SignatureShow = ref(true)
+const v3SignatureShow = ref(false)
 const dialogVisible = ref(false)
-let staticLoading = ref(true)
-let dynamicLoading = ref(true)
-let imageUrls = ref([])
+const staticLoading = ref(true)
+const dynamicLoading = ref(true)
+const judgeLoading = ref(true)
+const imageUrls = ref([])
 
 let APK = ref({
-  file_name:'1ace25ed992a997d43362ed4f0665e95.apk',
-  app_name:'金鼎娱乐城',
-  size:520.1314,
-  package_name:'com.cashwebappjinDingYLC',
+  file_name:'',
+  app_name:'',
+  size:0,
+  package_name:'',
 })
 
 let VersionInfo = ref({
-  minSDKVersion: 14,
-  TargetSDKVersion: 28,
-  CompileSDKVersion: 28
+  minSDKVersion: 0,
+  TargetSDKVersion: 0,
+  CompileSDKVersion: 0
 })
 
 let v1SignatureInfo = ref({
-  subject:'CN=1',
-  md5:'66 BE DA 48 2C 14 5C',
-  sha1:'DE 57 DA 7A AC 68 9B',
-  sha256:'63 AA 36 63 A1 EF DD'
+  subject:'',
+  md5:'',
+  sha1:'',
+  sha256:''
 })
 
 let v2SignatureInfo = ref({
@@ -625,40 +649,26 @@ let v3SignatureInfo = ref({
 
 const permissionData = ref([
   {
-    permissions:"android.permission.INTERNET",
-    status:'normal',
-    info:'send SMS messages',
-    description:'Allows application to send SMS messages. Malicious applications may cost you money by sending messages without your confirmation'
-  },
-  {
-    permissions: "android.permission.ACCESS_NETWORK_STATE",
-    status:'dangerous',
-    info:'send SMS messages',
-    description:'Allows application to send SMS messages. Malicious applications may cost you money by sending messages without your confirmation'
-  },
-  {
-    permissions:"android.permission.WRITE_EXTERNAL_STORAGE",
-    status:'signatureOrSystem',
-    info:'send SMS messages',
-    description:'Allows application to send SMS messages. Malicious applications may cost you money by sending messages without your confirmation'
+    permissions:"",
+    status:'',
+    info:'',
+    description:''
   },
 ]);
 
 let urls = ref([
-  {url:"http://47.108.138.165:8081/fingByKey/CirjDDDK",},
-  {url:"https://aa.41yd.bet"}
+  {url:""}
 ]);
 
 let sdks = ref([
-  {sdk:"com.bet8df.cloudtopapp.MainActivity"},
-  {sdk:"android.content.ContentResolver"},
+  {sdk:""},
 ]);
 
-let screenContent = ref('正在处理线路... 检查更新 未知错误. 注册 登录 游戏推荐 首页 存款 优惠 客服 我的 推荐码 d9bb84 账号')
+const screenContent = ref('')
 let resultData = ref([
   {
-    val:'赌博',
-    reason:'应用存在关键词：彩票\n应用存在关键词：投注'
+    val:'',
+    reason:''
   }
 ]);
 
@@ -679,6 +689,7 @@ const GetColor = (status)=>{
 const ClearReportValue = () => {
   staticLoading.value = true;
   dynamicLoading.value = true;
+  judgeLoading.value = true;
   APK.value = {
     file_name:'',
     app_name:'',
@@ -714,7 +725,7 @@ const HandleClose = (done: () => void) => {
       })
 }
 
-const ProofPDF=()=>{
+const ProofPDF = ()=>{
   // let newstr = document.getElementById("Result").innerHTML;
   // let oldstr = document.body.innerHTML;
   // document.body.innerHTML = newstr;
@@ -722,6 +733,10 @@ const ProofPDF=()=>{
   // document.body.innerHTML = oldstr;
   downloadPDF(document.getElementById("Result"),"检测报告")
   CancelUpload();
+}
+
+const ProofWord = () => {
+  console.log("导出为 word")
 }
 
 //监测某些值的变化

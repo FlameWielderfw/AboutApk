@@ -183,17 +183,20 @@
             <div class="row-body" v-show="v2SignatureShow">
               <el-card class="card">
                 <div style="width: 100%;display: flex;flex-direction: row">
-                  <div style="width: 50%;" >
+                  <div style="width: 80%;" >
                     <strong>签名信息 V2</strong>
                     <br>
+                    <span class="badge">subject</span>
+                    {{v2SignatureInfo.subject}}
+                    <br>
                     <span class="badge">md5</span>
-                    {{v2SignatureInfo.md5.replaceAll(" ","")}}
+                    {{v2SignatureInfo.md5}}
                     <br>
                     <span class="badge">sha1</span>
-                    {{v2SignatureInfo.sha1.replaceAll(" ","")}}
+                    {{v2SignatureInfo.sha1}}
                     <br>
                     <span class="badge">sha256</span>
-                    {{v2SignatureInfo.sha256.replaceAll(" ","")}}
+                    {{v2SignatureInfo.sha256}}
                   </div>
                   <div style="width: 50%;" v-show="v3SignatureShow">
                     <strong>签名信息 V3</strong>
@@ -224,7 +227,7 @@
           <div class="row">
             <div class="row-body">
               <el-card class="card">
-                <strong>URLS</strong>
+                <strong>通联地址</strong>
                 <el-table border :data="urls">
                   <el-table-column prop="url" label="URL"/>
                 </el-table>
@@ -258,21 +261,15 @@
         <div class="row">
           <div class="row-body">
             <el-card class="card">
-              <strong>研判结果</strong>
-              <br>
+              <strong>研判结果（仅供参考）</strong><br>
               <div v-for="item in resultData">
-                涉及{{item.val}}
-                <br>
-                <el-text style="font-weight: 550">判断原因为:</el-text>
-                <br>
+                该应用可能涉及 {{item.val}}<br><br>
+                <strong>判断理由</strong><br>
                 <el-text v-for="reason in item.reason.split('\n')">
-                  {{reason}}
-                  <br>
+                  {{reason}}<br>
                 </el-text>
-              </div>
-              <br>
-              <strong>违规图片</strong>
-              <br>
+              </div><br>
+              <strong>应用图像展示</strong><br>
               <div class="image-grid">
                 <div v-for="(imageUrl, index) in imageUrls" :key="index" class="image-container">
                   <img :src="imageUrl" alt="Image" class="image">
@@ -286,11 +283,11 @@
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="CloseDialog">关闭</el-button>
-        <el-button type="primary" @click="ProofPDF">
-          导出为pdf
+        <el-button type="primary" color="#725feb" @click="ProofPDF">
+          导出为 .pdf
         </el-button>
-        <el-button type="primary" @click="ProofWord">
-          导出为word
+        <el-button type="primary" color="#725feb" @click="ProofWord">
+          导出为 .docx
         </el-button>
       </div>
     </template>
@@ -495,15 +492,15 @@ function GetStaticData(Data){
   VersionInfo.value.minSDKVersion = Data.versionInfo.minSdkVersion
   VersionInfo.value.TargetSDKVersion = Data.versionInfo.targetSdkVersion
   VersionInfo.value.CompileSDKVersion = Data.versionInfo.compileSdkVersion
-  v1SignatureInfo.value.subject = Data.v1SignatureInfo.subject
+  v1SignatureInfo.value.subject = Data.v1SignatureInfo.certification.subject
   v1SignatureInfo.value.md5 = Data.v1SignatureInfo.certification.md5
   v1SignatureInfo.value.sha1 = Data.v1SignatureInfo.certification.sha1
   v1SignatureInfo.value.sha256 = Data.v1SignatureInfo.certification.sha256
-  v2SignatureInfo.value.subject = Data.v2SignatureInfo.subject
+  v2SignatureInfo.value.subject = Data.v2SignatureInfo.certification.subject
   v2SignatureInfo.value.md5 = Data.v2SignatureInfo.certification.md5
   v2SignatureInfo.value.sha1 = Data.v2SignatureInfo.certification.sha1
   v2SignatureInfo.value.sha256 = Data.v2SignatureInfo.certification.sha256
-  v3SignatureInfo.value.subject = Data.v3SignatureInfo.subject
+  v3SignatureInfo.value.subject = Data.v3SignatureInfo.certification.subject
   v3SignatureInfo.value.md5 = Data.v3SignatureInfo.certification.md5
   v3SignatureInfo.value.sha1 = Data.v3SignatureInfo.certification.sha1
   v3SignatureInfo.value.sha256 = Data.v3SignatureInfo.certification.sha256
@@ -512,7 +509,6 @@ function GetStaticData(Data){
   permissionData.value = Data.permissions.map(permission => {
     const package_list = permission.split(".");
     const permission_name = package_list[package_list.length - 1];
-    console.log(permission_name)
     const permission_info = DVM_PERMISSIONS[permission_name] === undefined ? ['未知', '未知', '未知'] : DVM_PERMISSIONS[permission_name]
     return {
       permissions: permission_name,
@@ -644,12 +640,7 @@ let sdks = ref([
 ]);
 
 const screenContent = ref('')
-let resultData = ref([
-  {
-    val:'',
-    reason:''
-  }
-]);
+let resultData = ref([]);
 
 const GetColor = (status)=>{
   let color = '#'
@@ -698,7 +689,13 @@ const CloseDialog = () => {
  * 点击空白区域让 Dialog 关闭的回调函数
  * */
 const HandleClose = () => {
-  ElMessageBox.confirm('APK 未解析完毕，是否确认离开？')
+  ElMessageBox.confirm(
+      'APK 未解析完毕，是否确认离开？',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+      }
+  )
     .then(() => { CloseDialog() })
     .catch(() => {})
 }
@@ -845,6 +842,7 @@ watchEffect(() => {
 }
 strong{
   font-weight: bolder;
+  font-size: 20px;
 }
 .image-grid {
   display: grid;

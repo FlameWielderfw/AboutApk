@@ -1,5 +1,7 @@
 import html2canvas from 'html2canvas';
 import JsPDF from 'jspdf';
+// import { WidthType, BorderStyle, Document, Paragraph, Packer, TextRun } from "docx";
+// import { saveAs } from 'file-saver';
 
 /**
  * @param ele      要生成 pdf 的 DOM 元素（容器）
@@ -69,8 +71,28 @@ const downloadPDF = (ele, pdfName) => {
   })
 }
 
+const downloadWord = (obj) => {
+  // let doc = new Document();
+  //
+  // // Add paragraph in the document
+  // let title = new Paragraph(`Detailed Report for ${obj.name}`).title().center();
+  //
+  // // To export into a .docx file
+  // let packer = new Packer();
+  //
+  // packer.toBlob(doc).then(blob => {
+  //   saveAs(blob, "detailed_report.docx");
+  //   // using sweet alert for notification
+  //   toast({
+  //     type: 'success',
+  //     title: 'Document created!'
+  //   })
+  // });
+}
+
 const OutputUtils = {
-  downloadPDF: downloadPDF
+  downloadPDF: downloadPDF,
+  downloadWord: downloadWord
 }
 
 export default OutputUtils

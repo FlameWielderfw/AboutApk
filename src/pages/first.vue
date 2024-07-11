@@ -253,7 +253,7 @@
       </section>
 
 <!--      研判加载界面 -->
-      <section v-loading="true" v-show="judgeLoading === true && staticLoading !== dynamicLoading"
+      <section v-loading="true" v-show="judgeLoading === true && staticLoading === false && dynamicLoading == false"
                style="height: 200px; text-align: center; justify-content: center;"
                element-loading-text="研判中，请耐心等待.....">
       </section>
@@ -375,7 +375,13 @@ const handleUploadSuccess = (response: any, uploadFile: UploadFile, uploadFiles:
  * apk 文件上传失败处理逻辑
  * */
 const handleErrorUpload = (error: Error, uploadFile: UploadFile, uploadFiles: UploadFiles) => {
-  alert(`${uploadFile.name} 上传失败, 失败原因: ${error}`)
+  ElMessageBox.confirm(
+      `${uploadFile.name} 上传失败, 失败原因: ${error}`,
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+      }
+  ).then(() => {}).catch(() => {})
   tableData.value = tableData.value.filter((item) => item.name !== uploadFile.name);
 }
 
@@ -441,7 +447,13 @@ const GetJudgeResult = (analysisInfo: AnalysisModel) => {
       })
       .catch(error => {
         console.error('获取结果失败！');
-        alert(error)
+        ElMessageBox.confirm(
+            `error`,
+            {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+            }
+        ).then(() => {}).catch(() => {})
       });
 }
 
@@ -456,7 +468,13 @@ const GetScreencaps = (analysisInfo: AnalysisModel) => {
       })
       .catch(error => {
         console.error('获取图片失败！');
-        alert(error)
+        ElMessageBox.confirm(
+            error,
+            {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+            }
+        ).then(() => {}).catch(() => {})
       });
 }
 
@@ -518,11 +536,11 @@ function GetStaticData(Data){
     };
   });
 
-  urls.value = Data.urls.map((item, index) => {
+  urls.value = Data.urls.map((item) => {
     return {["url"]: item};
   });
 
-  sdks.value = Data.sdks.map((item, index) => {
+  sdks.value = Data.sdks.map((item) => {
     return {["sdk"]: item};
   });
 }
@@ -551,7 +569,13 @@ const RequestByURL = (url: string)=>{
       })
       .catch(error => {
         console.error('Error uploading file:', error);
-        alert('上传失败！')
+        ElMessageBox.confirm(
+            "上传失败",
+            {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+            }
+        ).then(() => {}).catch(() => {})
       });
 }
 
@@ -667,6 +691,7 @@ const ClearReportValue = () => {
     package_name:'',
   }
   v2SignatureInfo.value = {
+    subject: "",
     md5:'',
     sha1:'',
     sha256:''
@@ -705,7 +730,10 @@ const ProofPDF = () => {
 }
 
 const ProofWord = () => {
-  console.log("导出为 word")
+
+  OutputUtils.downloadWord({
+    name: "title"
+  })
 }
 
 //监测某些值的变化

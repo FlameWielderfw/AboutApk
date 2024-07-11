@@ -44,12 +44,14 @@
             <el-upload
                 class="uploadBox2"
                 drag
-                action="http://127.0.0.1:10315/api/throwaway"
+                action="http://127.0.0.1:10315/api/upload_qrcode"
                 multiple
                 :show-file-list= "false"
                 :on-change="handleChange"
                 :on-error="handleErrorUpload"
+                :before-upload="handleBeforeUpload"
                 :on-success="qrcodeUploadSuccess"
+                :on-progress="handleProgress"
                 :limit = 1
                 :accept="'.jpg,.jpeg,.png,'"
             >
@@ -110,16 +112,12 @@ import type {
   UploadRawFile,
   UploadUserFile
 } from 'element-plus'
-import axios from "axios";
 import {CircleCheck, Document, FullScreen} from '@element-plus/icons-vue'
-import ImageUtils from '@/utils/ImageUtils'
+// import ImageUtils from '@/utils/ImageUtils'
 import { ElMessageBox } from 'element-plus'
 import Report from "@/pages/Report.vue";
 import AnalysisService from "@/service/AnalysisService";
 
-const BaseUrl = 'http://127.0.0.1:10315'
-
-const qrcodeData = ref('')
 const urlInput = ref('')
 const customColor = [
   { color: '#f56c6c', percentage: 20 },
@@ -140,8 +138,6 @@ const uploadFileTableData = ref<UploadFileData[]>([])  // 需要显示在界面�
 const showUploadedFileTable = ref(false)
 const fileList = ref<UploadUserFile[]>([])
 
-// const UploadFiles = ref<AnalysisModel[]>([])  // TODO 干掉这个变量
-
 watchEffect(() => {
   showUploadedFileTable.value = uploadFileTableData.value.length > 0;
 });
@@ -156,8 +152,8 @@ const handleChange: UploadProps['onChange'] = (uploadFile, uploadFiles) => {
 const handleUploadSuccess = (response: any, uploadFile: UploadFile, uploadFiles: UploadFiles) => {
   // 上传成功时, 更新 uploadedFiles 数据列表
   const analysisNum = response.message
-  uploadFileTableData.value.find((item) => item.name === uploadFile.name).progress = 101;
-  uploadFileTableData.value.find((item) => item.name === uploadFile.name).analysisNum = analysisNum;
+  uploadFileTableData.value.find((item) => item.name === uploadFile.name)!.progress = 101;
+  uploadFileTableData.value.find((item) => item.name === uploadFile.name)!.analysisNum = analysisNum;
 }
 
 /**
@@ -165,7 +161,7 @@ const handleUploadSuccess = (response: any, uploadFile: UploadFile, uploadFiles:
  * */
 const handleProgress = (evt: UploadProgressEvent, uploadFile: UploadFile, uploadFiles: UploadFiles) => {
   uploadFiles.forEach((file) => {
-    uploadFileTableData.value.find((item) => item.name === file.name).progress = file.percentage
+    uploadFileTableData.value.find((item) => item.name === file.name)!.progress = file.percentage ?? 0
   });
 }
 
@@ -196,24 +192,29 @@ const handleErrorUpload = (error: Error, uploadFile: UploadFile, uploadFiles: Up
 /**
  * 处理二维码
  * */
-const qrcodeUploadSuccess = (response: any, uploadFile: UploadFile, uploadFiles: UploadFiles)=>{
-  const qrCodeFile = uploadFile.raw;
-  if (qrCodeFile) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const image = new Image();
-      if (typeof e.target.result === "string") {
-        image.src = e.target.result;
-      }
-      image.onload = () => {
-        const code = ImageUtils.decodeQRCode(image);
-        console.log(code)
-        urlInput.value = code;
-        UploadURL(urlInput.value)
-      };
-    };
-    reader.readAsDataURL(qrCodeFile);
-  }
+const qrcodeUploadSuccess = (response: any, uploadFile: UploadFile, uploadFiles: UploadFiles) => {
+  // 上传成功时, 更新 uploadedFiles 数据列表
+  const analysisNum = response.message
+  uploadFileTableData.value.find((item) => item.name === uploadFile.name)!.progress = 101;
+  uploadFileTableData.value.find((item) => item.name === uploadFile.name)!.analysisNum = analysisNum;
+
+  // const qrCodeFile = uploadFile.raw;
+  // if (qrCodeFile) {
+  //   const reader = new FileReader();
+  //   reader.onload = (e) => {
+  //     const image = new Image();
+  //     if (typeof e.target.result === "string") {
+  //       image.src = e.target.result;
+  //     }
+  //     image.onload = () => {
+  //       const code = ImageUtils.decodeQRCode(image);
+  //       console.log(code)
+  //       urlInput.value = code;
+  //       UploadURL(urlInput.value)
+  //     };
+  //   };
+  //   reader.readAsDataURL(qrCodeFile);
+  // }
 }
 // ============================ End Upload ============================
 
@@ -236,7 +237,7 @@ const ItemDelete = (row: UploadFileData) =>{
 /**
  * 直接上传 url, 通过 url 请求分析
  * */
-const UploadURL = (url) => {
+const UploadURL = (url: string) => {
   AnalysisService.uploadUrl(url)
       .then(response => {
         if (response.code === 2000) {

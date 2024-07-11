@@ -1,3 +1,5 @@
+import jsQR from "jsqr";
+
 // 二维码解析
 const decodeQRCode = (image)=> {
   // 创建画布

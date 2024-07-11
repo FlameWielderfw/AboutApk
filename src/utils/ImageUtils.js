@@ -12,13 +12,12 @@ const decodeQRCode = (image)=> {
     inversionAttempts: 'dontInvert',
   });
   if (decodedResult) {
-    //返回识别结果
     return decodedResult.data
   } else {
-    window.alert('未识别到二维码!')
-    return ''
+    return ""
   }
 }
+
 const ImageUtils = {
   decodeQRCode: decodeQRCode
 }

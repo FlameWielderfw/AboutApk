@@ -31,7 +31,7 @@ const getJudgeResult = async (analysisNo) => {
 /**
  * 获取截屏 uri
  * */
-const getScreencaps = async (analysisNo) => {
+const getScreencaps = async (analysisNo: string) => {
   const formData = new FormData()
   formData.append('analysis_no', analysisNo)
   const res = await axios.post("/api/get_screencaps", formData)
@@ -42,10 +42,25 @@ const getScreencaps = async (analysisNo) => {
   }
 }
 
+/**
+ * 上传 url
+ * */
+const uploadUrl = async (url: string) => {
+  const formData = new FormData();
+  formData.append('url', url)
+  const res = await axios.post("/api/upload_url", formData)
+  try {
+    return res.data;
+  } catch (error) {
+    return error;
+  }
+}
+
 const AnalysisService = {
   getResult: getResult,
   getJudgeResult: getJudgeResult,
-  getScreencaps: getScreencaps
+  getScreencaps: getScreencaps,
+  uploadUrl: uploadUrl
 }
 
 export default AnalysisService;

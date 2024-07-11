@@ -64,8 +64,8 @@
               </div>
             </el-upload>
             <el-row style="justify-content: center;top:20px;height: 100px;width: 100%" >
-              <el-input  v-model="input" style="width: 65%;height: 40px;margin-right: 20px;" placeholder="请输入 APK 所在的 URL" />
-              <el-button style="position:relative;top:5px"  type="primary" color="#725feb" @click="UploadURL">上传</el-button>
+              <el-input v-model="urlInput" style="width: 65%;height: 40px;margin-right: 20px;" placeholder="请输入 APK 所在的 URL" />
+              <el-button style="position:relative;top:5px" type="primary" color="#725feb" @click="UploadURL(urlInput)">上传</el-button>
             </el-row>
           </el-card>
         </el-main>
@@ -88,7 +88,7 @@
           </el-table-column>
           <el-table-column prop="operation" label="操作">
             <template #default="scope">
-              <el-button type="primary" @click="ShowResultReport(scope.row)" :disabled="scope.row.submit" color="#725feb">分析结果</el-button>
+              <el-button type="primary" @click="ShowResultReport(scope.row)" color="#725feb">分析结果</el-button>
               <el-button type="danger" @click="ItemDelete(scope.row)">删除条目</el-button>
             </template>
           </el-table-column>
@@ -114,17 +114,13 @@ import axios from "axios";
 import {CircleCheck, Document, FullScreen} from '@element-plus/icons-vue'
 import ImageUtils from '@/utils/ImageUtils'
 import { ElMessageBox } from 'element-plus'
-import { AnalysisModel } from "@/model/AnalysisModel";
 import Report from "@/pages/Report.vue";
+import AnalysisService from "@/service/AnalysisService";
 
 const BaseUrl = 'http://127.0.0.1:10315'
 
-const qrcodeData = ref('无结果')
-const UploadProgress = ref(0);
-const input = ref('')
-const isTimerRunning = ref(false)
-const intervalId = ref<number | null>(null)
-const iconImage = ref('')
+const qrcodeData = ref('')
+const urlInput = ref('')
 const customColor = [
   { color: '#f56c6c', percentage: 20 },
   { color: '#e6a23c', percentage: 40 },
@@ -137,8 +133,7 @@ interface UploadFileData {
   name: string,
   progress: number,
   deleted: boolean,
-  submit: boolean,
-  analysisInfo: AnalysisModel
+  analysisNum: string
 }
 // 存储已经上传的文件信息
 const uploadFileTableData = ref<UploadFileData[]>([])  // 需要显示在界面上的信息
@@ -160,13 +155,9 @@ const handleChange: UploadProps['onChange'] = (uploadFile, uploadFiles) => {
  * */
 const handleUploadSuccess = (response: any, uploadFile: UploadFile, uploadFiles: UploadFiles) => {
   // 上传成功时, 更新 uploadedFiles 数据列表
-  const analysisInfo: AnalysisModel = {
-    name: uploadFile.raw.name,
-    analysisNum: response.message  // TODO 这里 response.code 若不为 2000 需要处理
-  }
+  const analysisNum = response.message
   uploadFileTableData.value.find((item) => item.name === uploadFile.name).progress = 101;
-  uploadFileTableData.value.find((item) => item.name === uploadFile.name).submit = false;
-  uploadFileTableData.value.find((item) => item.name === uploadFile.name).analysisInfo = analysisInfo;
+  uploadFileTableData.value.find((item) => item.name === uploadFile.name).analysisNum = analysisNum;
 }
 
 /**
@@ -183,7 +174,7 @@ const handleBeforeUpload = (rawFile: UploadRawFile) => {
     name: rawFile.name,
     progress: 0,
     deleted : false,
-    submit : true
+    analysisNum: ""
   })
   return true;  // 返回 true 继续上传
 };
@@ -202,9 +193,12 @@ const handleErrorUpload = (error: Error, uploadFile: UploadFile, uploadFiles: Up
   uploadFileTableData.value = uploadFileTableData.value.filter((item) => item.name !== uploadFile.name);
 }
 
+/**
+ * 处理二维码
+ * */
 const qrcodeUploadSuccess = (response: any, uploadFile: UploadFile, uploadFiles: UploadFiles)=>{
-  const file = uploadFile.raw;
-  if (file) {
+  const qrCodeFile = uploadFile.raw;
+  if (qrCodeFile) {
     const reader = new FileReader();
     reader.onload = (e) => {
       const image = new Image();
@@ -212,13 +206,13 @@ const qrcodeUploadSuccess = (response: any, uploadFile: UploadFile, uploadFiles:
         image.src = e.target.result;
       }
       image.onload = () => {
-        let code = ImageUtils.decodeQRCode(image);
-        console.log(code)//识别结果
-        qrcodeData.value = code;
-        RequestByURL(qrcodeData.value)
+        const code = ImageUtils.decodeQRCode(image);
+        console.log(code)
+        urlInput.value = code;
+        UploadURL(urlInput.value)
       };
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(qrCodeFile);
   }
 }
 // ============================ End Upload ============================
@@ -229,7 +223,7 @@ const analysisNum = ref('')
  * 显示报告对话框
  * */
 const ShowResultReport = (row: UploadFileData) => {
-  analysisNum.value = row.analysisInfo.analysisNum
+  analysisNum.value = row.analysisNum
 }
 
 /**
@@ -239,34 +233,32 @@ const ItemDelete = (row: UploadFileData) =>{
   uploadFileTableData.value = uploadFileTableData.value.filter((item) => item.name !== row.name);
 }
 
-const UploadURL = () => {
-  RequestByURL(input.value)
-}
 /**
- * 通过 url 请求分析
+ * 直接上传 url, 通过 url 请求分析
  * */
-const RequestByURL = (url: string)=>{
-  const formData = new FormData();
-  formData.append('url', url)
-  axios({
-    method: 'POST',
-    url: BaseUrl + '/api/upload_url',
-    data:formData,
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    },
-  })
+const UploadURL = (url) => {
+  AnalysisService.uploadUrl(url)
       .then(response => {
-        console.log('File uploaded successfully!');
-        StartTimer({
-          name: url,
-          analysisNum: response.data.message
-        })
+        if (response.code === 2000) {
+          uploadFileTableData.value.push({
+            name: url,
+            progress: 100,
+            deleted : false,
+            analysisNum: response.message
+          })
+        } else {
+          ElMessageBox.confirm(
+              `上传失败，原因：${response.message}`,
+              {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+              }
+          ).then(() => {}).catch(() => {})
+        }
       })
       .catch(error => {
-        console.error('Error uploading file:', error);
         ElMessageBox.confirm(
-            "上传失败",
+            `上传失败，原因：${error}`,
             {
               confirmButtonText: '确定',
               cancelButtonText: '取消',

@@ -38,13 +38,13 @@
                     {{APK.size}}MB
                     <br>
                     <span class="badge">md5</span>
-                    {{v1SignatureInfo.md5.replaceAll(" ","")}}
+                    {{signatureInfo.md5.replaceAll(" ","")}}
                     <br>
                     <span class="badge">sha1</span>
-                    {{v1SignatureInfo.sha1.replaceAll(" ","")}}
+                    {{signatureInfo.sha1.replaceAll(" ","")}}
                     <br>
                     <span class="badge">sha256</span>
-                    {{v1SignatureInfo.sha256.replaceAll(" ","")}}
+                    {{signatureInfo.sha256.replaceAll(" ","")}}
                   </div>
                   <div>
                     <strong>应用基本信息</strong>
@@ -80,35 +80,23 @@
                 </el-table>
               </el-card>
             </div>
-            <div class="row-body" v-show="v2SignatureShow">
+            <div class="row-body">
               <el-card class="card">
                 <div style="width: 100%;display: flex;flex-direction: row">
                   <div style="width: 80%;" >
-                    <strong>签名信息 V2</strong>
+                    <strong>签名信息</strong>
                     <br>
                     <span class="badge">subject</span>
-                    {{v2SignatureInfo.subject}}
+                    {{signatureInfo.subject}}
                     <br>
                     <span class="badge">md5</span>
-                    {{v2SignatureInfo.md5}}
+                    {{signatureInfo.md5}}
                     <br>
                     <span class="badge">sha1</span>
-                    {{v2SignatureInfo.sha1}}
+                    {{signatureInfo.sha1}}
                     <br>
                     <span class="badge">sha256</span>
-                    {{v2SignatureInfo.sha256}}
-                  </div>
-                  <div style="width: 50%;" v-show="v3SignatureShow">
-                    <strong>签名信息 V3</strong>
-                    <br>
-                    <span class="badge">md5</span>
-                    {{v3SignatureInfo.md5.replaceAll(" ","")}}
-                    <br>
-                    <span class="badge">sha1</span>
-                    {{v3SignatureInfo.sha1.replaceAll(" ","")}}
-                    <br>
-                    <span class="badge">sha256</span>
-                    {{v3SignatureInfo.sha256.replaceAll(" ","")}}
+                    {{signatureInfo.sha256}}
                   </div>
                 </div>
               </el-card>
@@ -195,7 +183,7 @@
 </template>
 
 <script lang="ts" setup>
-import {ref, watch, watchEffect} from 'vue'
+import {ref, watch} from 'vue'
 import { ElMessageBox } from 'element-plus'
 import DVM_PERMISSIONS from '@/data/dvm_permission';
 import OutputUtils from '@/utils/OutputUtils'
@@ -220,7 +208,7 @@ const dynamicLoading = ref(true)
 const judgeLoading = ref(true)
 
 // 定时器轮询
-const intervalId = ref<number | null>(null)
+const intervalId = ref<number>(-1)
 const isTimerRunning = ref(false)
 
 // apk 基本信息
@@ -231,34 +219,13 @@ const APK = ref({
   package_name: '',
 })
 
-// 版本信息
 const VersionInfo = ref({
   minSDKVersion: 0,
   TargetSDKVersion: 0,
   CompileSDKVersion: 0
 })
 
-// 三个版本的签名信息
 const signatureInfo = ref({
-  subject:'',
-  md5:'',
-  sha1:'',
-  sha256:''
-})
-
-const v1SignatureInfo = ref({
-  subject:'',
-  md5:'',
-  sha1:'',
-  sha256:''
-})
-const v2SignatureInfo = ref({
-  subject:'',
-  md5:'',
-  sha1:'',
-  sha256:''
-})
-const v3SignatureInfo = ref({
   subject:'',
   md5:'',
   sha1:'',
@@ -312,8 +279,8 @@ const HandleDialogClose = () => {
 }
 
 // 根据不同状态获得颜色
-const GetColorByStatus = (status)=>{
-  let color = '#'
+const GetColorByStatus = (status: string)=>{
+  let color = ''
   if (status === '正常')
     color = '#17a2b8'
   else if (status === '危险')
@@ -324,14 +291,6 @@ const GetColorByStatus = (status)=>{
     color = '#a775ff'
   return color
 }
-
-const v2SignatureShow = ref(true)
-const v3SignatureShow = ref(false)
-
-watchEffect(() => {
-  v2SignatureShow.value = v2SignatureInfo.value.md5 != '';
-  v3SignatureShow.value = v3SignatureInfo.value.md5 != '';
-});
 
 const CloseDialog = () => {
   dialogVisible.value = false
@@ -360,7 +319,7 @@ const ClearReportValue = () => {
     size:0,
     package_name:'',
   }
-  v2SignatureInfo.value = {
+  signatureInfo.value = {
     subject: "",
     md5: "",
     sha1: "",
@@ -371,6 +330,7 @@ const ClearReportValue = () => {
   urls.value = []
   resultData.value = []
   imageUrls.value = []
+  iconImage.value = ""
 }
 
 // 定时发送获取分析结果请求
@@ -386,7 +346,7 @@ const StartTimer = () => {
 
 const StopTimer = () => {
   if (isTimerRunning.value === true) {
-    if (intervalId.value) {
+    if (intervalId.value !== -1) {
       clearInterval(intervalId.value)
       intervalId.value = null
       isTimerRunning.value = false
@@ -405,18 +365,21 @@ function GetStaticData(Data){
   VersionInfo.value.minSDKVersion = Data.versionInfo.minSdkVersion
   VersionInfo.value.TargetSDKVersion = Data.versionInfo.targetSdkVersion
   VersionInfo.value.CompileSDKVersion = Data.versionInfo.compileSdkVersion
-  v1SignatureInfo.value.subject = Data.v1SignatureInfo.certification.subject
-  v1SignatureInfo.value.md5 = Data.v1SignatureInfo.certification.md5
-  v1SignatureInfo.value.sha1 = Data.v1SignatureInfo.certification.sha1
-  v1SignatureInfo.value.sha256 = Data.v1SignatureInfo.certification.sha256
-  v2SignatureInfo.value.subject = Data.v2SignatureInfo.certification.subject
-  v2SignatureInfo.value.md5 = Data.v2SignatureInfo.certification.md5
-  v2SignatureInfo.value.sha1 = Data.v2SignatureInfo.certification.sha1
-  v2SignatureInfo.value.sha256 = Data.v2SignatureInfo.certification.sha256
-  v3SignatureInfo.value.subject = Data.v3SignatureInfo.certification.subject
-  v3SignatureInfo.value.md5 = Data.v3SignatureInfo.certification.md5
-  v3SignatureInfo.value.sha1 = Data.v3SignatureInfo.certification.sha1
-  v3SignatureInfo.value.sha256 = Data.v3SignatureInfo.certification.sha256
+
+  const updateSignatureInfo = (certification) => {
+    signatureInfo.value.subject = certification.subject
+    signatureInfo.value.md5 = certification.md5
+    signatureInfo.value.sha1 = certification.sha1
+    signatureInfo.value.sha256 = certification.sha256
+  }
+  if (Data.v1SignatureInfo.certification.subject !== "") {
+    updateSignatureInfo(Data.v1SignatureInfo.certification)
+  } else if (Data.v2SignatureInfo.certification.subject !== "") {
+    updateSignatureInfo(Data.v2SignatureInfo.certification)
+  } else if (Data.v3SignatureInfo.certification.subject === "") {
+    updateSignatureInfo(Data.v3SignatureInfo.certification)
+  }
+
   iconImage.value = "data:image/png;base64," + Data.icon
 
   permissionData.value = Data.permissions.map(permission => {

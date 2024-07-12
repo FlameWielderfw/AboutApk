@@ -131,7 +131,7 @@
             </div>
             <div class="row-body">
               <el-card class="card">
-                <strong>App内可疑文本</strong>
+                <strong>App内文本</strong>
                 <br>
                 {{screenContent}}
               </el-card>
@@ -157,7 +157,7 @@
                   {{reason}}<br>
                 </el-text>
               </div><br>
-              <strong>应用图像展示</strong><br>
+              <strong>应用图像</strong><br>
               <div class="image-grid">
                 <div v-for="(imageUrl, index) in imageUrls" :key="index" class="image-container">
                   <img :src="imageUrl" alt="Image" class="image">
@@ -331,6 +331,7 @@ const ClearReportValue = () => {
   resultData.value = []
   imageUrls.value = []
   iconImage.value = ""
+  screenContent.value = ""
 }
 
 // 定时发送获取分析结果请求
@@ -445,7 +446,8 @@ const RequestForReport = () => {
           screenContent.value = Data.screenContent
           dynamicLoading.value = false
         } else if (dynamicStatus !== "Analysing") {
-          console.log("动态分析失败")
+          console.log(`动态分析失败，失败原因${dynamicStatus}`)
+          dynamicLoading.value = false
         }
         if (judgeStatus === "Success") {
           GetJudgeResult()
@@ -453,7 +455,7 @@ const RequestForReport = () => {
           judgeLoading.value = false
           StopTimer()
         } else if (judgeStatus !== "Judging") {
-          console.log("研判失败")
+          console.log(`研判失败，失败原因 ${judgeStatus}`)
           StopTimer()
         }
       })

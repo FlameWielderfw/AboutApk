@@ -15,7 +15,7 @@
             <el-text  class="title">离线分析模式</el-text>
             <el-upload
                 v-model:file-list="fileList"
-                class="uploadBox" drag multiple
+                class="uploadBox" drag
                 action="http://127.0.0.1:10315/api/upload_apk"
                 :show-file-list= "false"
                 :on-change="handleChange"
@@ -45,7 +45,6 @@
                 class="uploadBox2"
                 drag
                 action="http://127.0.0.1:10315/api/upload_qrcode"
-                multiple
                 :show-file-list= "false"
                 :on-change="handleChange"
                 :on-error="handleErrorUpload"

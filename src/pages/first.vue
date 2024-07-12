@@ -165,13 +165,17 @@ const handleProgress = (evt: UploadProgressEvent, uploadFile: UploadFile, upload
 }
 
 const handleBeforeUpload = (rawFile: UploadRawFile) => {
-  uploadFileTableData.value.push({
-    name: rawFile.name,
-    progress: 0,
-    deleted : false,
-    analysisNum: ""
-  })
-  return true;  // 返回 true 继续上传
+  if (uploadFileTableData.value.find((item) => item.name === rawFile.name) === undefined) {
+    uploadFileTableData.value.push({
+      name: rawFile.name,
+      progress: 0,
+      deleted : false,
+      analysisNum: ""
+    })
+    return true;  // 返回 true 继续上传
+  } else {
+    return false;
+  }
 };
 
 /**

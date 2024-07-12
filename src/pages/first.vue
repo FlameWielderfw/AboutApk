@@ -98,7 +98,7 @@
     </el-main>
   </el-container>
 
-  <Report :analysis-no="analysisNum"/>
+  <Report :analysis-no="analysisNum" :force-show="forceShowReport"/>
 </template>
 
 <script lang="ts" setup>
@@ -117,7 +117,8 @@ import { ElMessageBox } from 'element-plus'
 import Report from "@/pages/Report.vue";
 import AnalysisService from "@/service/AnalysisService";
 
-const urlInput = ref('')
+const forceShowReport = ref<boolean>(false)  // 用于强制显示 Report
+const urlInput = ref<string>('')
 const customColor = [
   { color: '#f56c6c', percentage: 20 },
   { color: '#e6a23c', percentage: 40 },
@@ -228,6 +229,7 @@ const analysisNum = ref('')
  * */
 const ShowResultReport = (row: UploadFileData) => {
   analysisNum.value = row.analysisNum
+  forceShowReport.value = !forceShowReport.value
 }
 
 /**

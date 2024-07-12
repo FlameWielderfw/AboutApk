@@ -192,6 +192,7 @@ import AnalysisService from '@/service/AnalysisService'
 
 const props = defineProps<{
   analysisNo: string;
+  forceShow: boolean;
 }>();
 
 /**
@@ -208,7 +209,7 @@ const dynamicLoading = ref(true)
 const judgeLoading = ref(true)
 
 // 定时器轮询
-const intervalId = ref<number>(-1)
+const intervalId = ref<null | NodeJS.Timeout>(null)
 const isTimerRunning = ref(false)
 
 // apk 基本信息
@@ -232,8 +233,8 @@ const signatureInfo = ref({
   sha256:''
 })
 
-const iconImage = ref('')  // icon 图片的 base64 字符串
-const imageUrls = ref([])  // app 图像的地址
+const iconImage = ref<string>('')  // icon 图片的 base64 字符串
+const imageUrls = ref<string[]>([])  // app 图像的地址
 
 // 权限信息
 const permissionData = ref([
@@ -248,8 +249,12 @@ const permissionData = ref([
 // app 内部文本
 const screenContent = ref('')
 
-// ？
-let resultData = ref([]);
+// 研判结果
+interface JudgeResult {
+  val: string;
+  reason: string;
+}
+let resultData = ref<JudgeResult[]>([]);
 
 // 通联地址
 interface UrlData {
@@ -267,15 +272,16 @@ const sdks = ref<SdkData[]>([]);
  * 点击空白区域让 Dialog 关闭的回调函数
  * */
 const HandleDialogClose = () => {
-  ElMessageBox.confirm(
-      'APK 未解析完毕，是否确认离开？',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-      }
-  )
-      .then(() => { CloseDialog() })
-      .catch(() => {})
+  // ElMessageBox.confirm(
+  //     'APK 未解析完毕，是否确认离开？',
+  //     {
+  //       confirmButtonText: '确定',
+  //       cancelButtonText: '取消',
+  //     }
+  // )
+  //     .then(() => { CloseDialog() })
+  //     .catch(() => {})
+  CloseDialog()
 }
 
 // 根据不同状态获得颜色
@@ -347,8 +353,8 @@ const StartTimer = () => {
 
 const StopTimer = () => {
   if (isTimerRunning.value === true) {
-    if (intervalId.value !== -1) {
-      clearInterval(intervalId.value)
+    if (intervalId.value !== null) {
+      clearInterval(Number(intervalId.value))
       intervalId.value = null
       isTimerRunning.value = false
     }
@@ -395,11 +401,11 @@ function GetStaticData(Data){
     };
   });
 
-  urls.value = Data.urls.map((item) => {
+  urls.value = Data.urls.map((item: string) => {
     return {["url"]: item};
   });
 
-  sdks.value = Data.sdks.map((item) => {
+  sdks.value = Data.sdks.map((item: string) => {
     return {["sdk"]: item};
   });
 }
@@ -472,7 +478,7 @@ const GetJudgeResult = () => {
         const code = response.code
         const message = response.message
         if (code === 2000) {
-          message.forEach((item)=>{
+          message.forEach((item: string)=>{
             let parts = item.split('\n');
             const result = {
               val: parts[0],

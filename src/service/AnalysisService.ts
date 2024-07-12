@@ -3,7 +3,7 @@ import axios from "axios";
 /**
  * 获取分析结果，该接口采用轮询方式
  * */
-const getResult = async (analysisNo) => {
+const getResult = async (analysisNo: string) => {
   const formData = new FormData()
   formData.append('analysis_no', analysisNo)
   const res = await axios.post("/api/get_result", formData)
@@ -17,7 +17,7 @@ const getResult = async (analysisNo) => {
 /**
  * 获取研判结果
  * */
-const getJudgeResult = async (analysisNo) => {
+const getJudgeResult = async (analysisNo: string) => {
   const formData = new FormData()
   formData.append('analysis_no', analysisNo)
   const res = await axios.post("/api/get_judge_result", formData)

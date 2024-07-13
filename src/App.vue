@@ -16,13 +16,13 @@ const ListClick = ()=> {
       <el-header class="head">
           <el-container >
             <el-aside style="text-align: center;padding-top: 10px;height: 100%" >
-              <img src="@/img/alby.svg " alt="My SVG"  style="top:5px;position: relative; right:5px;width: calc(1.275rem + .3vw)"/>
+              <img src="@/assets/alby.svg " alt="My SVG"  style="top:5px;position: relative; right:5px;width: calc(1.275rem + .3vw)"/>
               <text class="title">ApkDetector</text>
             </el-aside>
             <el-main>
               <el-row :gutter="20" font-size="calc(1rem + .3vw)">
                 <el-col :span="3" ><router-link to="/pages/first" >
-                  <el-text color="black" style="font-size: 15px">apk解析</el-text>
+                  <el-text color="black" style="font-size: 15px">APK解析</el-text>
                 </router-link></el-col>
                 <el-col :span="3"><router-link to="/pages/BlackList">
                   <el-text color="black" style="font-size: 15px">黑白名单</el-text>

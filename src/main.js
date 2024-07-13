@@ -7,29 +7,18 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import axios from "axios";
 import router from "@/router/router.js";
 
-
 const app = createApp(App)
 // 注册所有图标
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
     app.component(key, component)
 }
 
-// 配置 Axios 的请求头
-axios.defaults.headers.common['Authorization'] = 'Bearer your_access_token'
-axios.defaults.headers.post['Content-Type'] = 'application/json'
+console.log(`** 识别到的后端地址为: ${import.meta.env.VITE_APP_API_URL}`)
 
-// 创建 Axios 实例
-const instance = axios.create({
-    baseURL: 'http://localhost:10315',
-    timeout: 10000, // 请求超时时间为10秒
-    headers: {
-        'Authorization': 'Bearer your_access_token',
-        'Content-Type': 'application/json'
-    }
-})
-
-// 将 Axios 实例挂载到 Vue 实例上
-app.config.globalProperties.$http = instance
+// 配置 Axios 的默认请求参数
+axios.defaults.baseURL = import.meta.env.VITE_APP_API_URL;
+axios.defaults.headers.post['Content-Type'] = 'multipart/form-data'
+axios.defaults.timeout = 10000
 
 app.use(ElementPlus)
 app.use(router).mount('#app')

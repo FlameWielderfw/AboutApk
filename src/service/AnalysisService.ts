@@ -56,11 +56,24 @@ const uploadUrl = async (url: string) => {
   }
 }
 
+/**
+ * 获取黑名单
+ * */
+const getBlacklist = async () => {
+  const res = await axios.get("/api/get_black_list")
+  try {
+    return res.data;
+  } catch (error) {
+    return error;
+  }
+}
+
 const AnalysisService = {
   getResult: getResult,
   getJudgeResult: getJudgeResult,
   getScreencaps: getScreencaps,
-  uploadUrl: uploadUrl
+  uploadUrl: uploadUrl,
+  getBlacklist: getBlacklist
 }
 
 export default AnalysisService;

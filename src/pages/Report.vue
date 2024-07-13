@@ -151,11 +151,13 @@
             <el-card class="card">
               <strong>研判结果（仅供参考）</strong><br>
               <div v-for="item in resultData">
-                该应用可能涉及 {{item.val}}<br><br>
-                <strong>判断理由</strong><br>
+                <br>
+                该应用可能涉及 {{item.val}}<br>
+                判断理由：<br>
                 <el-text v-for="reason in item.reason.split('\n')">
                   {{reason}}<br>
                 </el-text>
+                <br>
               </div><br>
               <strong>应用图像</strong><br>
               <div class="image-grid">

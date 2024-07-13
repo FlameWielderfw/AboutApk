@@ -1,44 +1,59 @@
-<script setup>
+<script setup lang="ts">
 import {onMounted, ref} from 'vue'
-import dayjs from 'dayjs'
-import axios from "axios";
+import AnalysisService from '@/service/AnalysisService'
+import Report from "@/pages/Report.vue";
 
-const now = new Date()
-const BaseUrl = 'http://localhost:8080'
-const tableData = ref([
-  {
-    id: 25,
-    apkName: "1ace25ed992a997d43362ed4f0665e95.apk",
-    packageName: "",
-    staticStatus: "Success",
-    dynamicStatus: "Success",
-    judgeStatus: "Success",
-    judgeResult: "80",
-    createTime: "2024-06-25T02:22:06.000+00:00",
-    analysisNo: "ac6ae201b2b4e918c66c9d61d4a65e3c"
-  },
+interface BlackListData {
+  id: number;
+  apkName: string;
+  packageName: string;
+  staticStatus: string;
+  dynamicStatus: string;
+  judgeStatus: string;
+  judgeResult: string;
+  isGamble: boolean;
+  gambleReason: string;
+  isSex: boolean;
+  sexReason: string;
+  isScam: boolean;
+  scamReason: string;
+  createTime: string;
+  analysisNo: string;
+  type: string;
+}
 
-])
+const analysisNum = ref<string>('')
+const forceShowReport = ref<boolean>(false)  // 用于强制显示 Report
+const blackList = ref<BlackListData[]>([])
+const whiteList = ref<BlackListData[]>([])
 
-onMounted(()=>{
-  axios({
-    method: 'GET',
-    url: BaseUrl+'/api/get_black_list',
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  })
+onMounted(() => {
+  AnalysisService.getBlacklist()
       .then(response => {
-        console.log('获取黑名单成功');
-        tableData.value = response.data.message
+        const allOrders: BlackListData[] = response.message
+        whiteList.value = allOrders.filter((order) => {
+          return !order.isScam && !order.isSex && !order.isGamble;
+        })
+        blackList.value = allOrders.filter((order) => {
+          return !(!order.isScam && !order.isSex && !order.isGamble);
+        })
+        blackList.value = blackList.value.map((order) => {
+          order.type = ""
+          if (order.isSex) order.type += "涉黄 "
+          if (order.isScam) order.type += "涉诈 "
+          if (order.isGamble) order.type += "涉赌 "
+          return order
+        })
       })
       .catch(error => {
         console.error('Error uploading file:', error);
         alert(error)
       });
 })
-const deleteRow = (index) => {
-  tableData.value.splice(index, 1)
+
+const showReport = (analysisNo: string) => {
+  analysisNum.value = analysisNo
+  forceShowReport.value = !forceShowReport.value
 }
 </script>
 
@@ -49,44 +64,39 @@ const deleteRow = (index) => {
         <text>App黑名单</text>
       </div>
       <div class="Table">
-        <el-table :data="tableData" style="width: 90%" max-height="250">
-          <el-table-column prop="apkName" label="App" width="200" />
-          <el-table-column prop="createTime" label="检定时间" width="200" />
-          <el-table-column prop="judgeResult" label="评分" width="80" />
-          <el-table-column fixed="right" label="Operations" min-width="100">
+        <el-table :data="blackList" style="width: 90%">
+          <el-table-column prop="apkName" label="文件名" width="200" />
+          <el-table-column prop="createTime" label="检定时间" width="180" />
+          <el-table-column prop="type" label="类别" />
+          <el-table-column fixed="right" label="操作" min-width="100">
             <template #default="scope">
               <el-button
-                  link
-                  type="primary"
-                  size="small"
-                  @click.prevent="deleteRow(scope.$index)"
+                  type="primary" size="large" link
+                  @click.prevent="showReport(scope.row.analysisNo)"
               >
-                Remove
+                详细信息
               </el-button>
             </template>
           </el-table-column>
         </el-table>
       </div>
-
     </el-aside>
+
     <el-main class="Side">
       <div class="Title">
         <text>App白名单</text>
       </div>
       <div class="Table">
-        <el-table :data="tableData" style="width: 90%" max-height="250">
-          <el-table-column prop="apkName" label="App" width="200" />
-          <el-table-column prop="createTime" label="检定时间" width="200" />
-          <el-table-column prop="judgeResult" label="评分" width="80" />
-          <el-table-column fixed="right" label="Operations" min-width="100">
+        <el-table :data="whiteList" style="width: 90%">
+          <el-table-column prop="apkName" label="文件名" width="320" />
+          <el-table-column prop="createTime" label="检定时间" width="180" />
+          <el-table-column fixed="right" label="操作">
             <template #default="scope">
               <el-button
-                  link
-                  type="primary"
-                  size="small"
-                  @click.prevent="deleteRow(scope.$index)"
+                  type="primary" size="large" link
+                  @click.prevent="showReport(scope.row.analysisNo)"
               >
-                Remove
+                详细信息
               </el-button>
             </template>
           </el-table-column>
@@ -94,12 +104,14 @@ const deleteRow = (index) => {
       </div>
     </el-main>
   </el-container>
+
+  <Report :analysis-no="analysisNum" :force-show="forceShowReport"/>
 </template>
 
 <style scoped>
 .Side{
   width: 50%;
-  height: 100vh;
+  height: 105vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -108,7 +120,7 @@ const deleteRow = (index) => {
 }
 .Title{
   text-align: center;
-  height: 80px;
+  height: 100px;
   width: 100%;
 }
 .Table{

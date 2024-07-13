@@ -13,6 +13,8 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
     app.component(key, component)
 }
 
+console.log(`** 识别到的后端地址为: ${import.meta.env.VITE_APP_API_URL}`)
+
 // 配置 Axios 的默认请求参数
 axios.defaults.baseURL = import.meta.env.VITE_APP_API_URL;
 axios.defaults.headers.post['Content-Type'] = 'multipart/form-data'
